@@ -1007,6 +1007,7 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
     $("#btnConfirmar").onclick = async () => {
       $("#btnConfirmar").disabled = true; $("#btnCorrigir").disabled = true;
       if (p.id === votante.pid) { aviso("Não é permitido votar em si próprio.", "erro-t"); return desenharVoto(); }
+      const jaAntes = !!votaram[votante.pid];
       const v = { setor: votante.setor, candidato: p.id, email: votante.email, ts: DB.agora() };
       try {
         await DB.update("", { ["votos/" + votante.pid]: v, ["votaram/" + votante.pid]: true, ["emails/" + chaveEmail(votante.email)]: votante.pid });
@@ -1016,7 +1017,7 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
           "");
       } catch (e) {
         mostrarFalha("gravação do voto", e);
-        const ja = !!votaram[votante.pid];
+        const ja = jaAntes;
         const motivo = ja ? "Este nome já tinha votado." : /permission/i.test((e && e.code) || "") ? "O voto foi recusado. Este e-mail pode já ter sido usado, a votação pode estar encerrada, ou as regras do Firestore não estão publicadas." : explicarErro(e);
         mostrar(cabecalho() + '<div class="mensagem v">' + icone("cadeado", "v") + '<div><h3>Não foi possível registar o voto</h3><p>' + esc(motivo) + '</p><p style="color:var(--cinza);font-size:13px">Código: ' + esc((e && e.code) || "-") + " · " + esc(String((e && e.message) || e || "").slice(0, 200)) + '</p></div></div><div class="acoes"><button class="btn btn-sec" id="btnFim">Voltar ao início</button></div>');
         $("#btnFim").onclick = recomecar;
