@@ -833,6 +833,25 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
     $("#btnReDemo").onclick = () => { DB.reiniciarDemo(); try { localStorage.removeItem("dpcm-reconhecimento-2026-votou"); } catch (e) {} document.cookie = "dpcm-reconhecimento-2026-votou=; max-age=0; path=/"; location.reload(); };
   }
 
+  /* Diagnóstico: se a ligação ao Firestore falhar, mostra o erro exacto no topo da página. */
+  function explicarErro(e) {
+    const c = String((e && e.code) || "").replace("firestore/", "");
+    const m = String((e && e.message) || e || "");
+    if (/does not exist|not-found|NOT_FOUND/i.test(c + " " + m)) return "O Firestore ainda não foi criado neste projecto (Firestore Database > Create database).";
+    if (/permission/i.test(c)) return "O Firestore recusou o pedido: as regras não estão publicadas ou têm um erro (Firestore Database > Rules > Publish).";
+    if (/unavailable|network|offline/i.test(c + " " + m)) return "Sem ligação ao Firestore. Verifique a internet.";
+    if (/failed-precondition/i.test(c)) return "O Firestore não está pronto (confirme que escolheu Standard edition e modo de produção).";
+    return "Erro técnico do Firestore.";
+  }
+  function mostrarFalha(onde, e) {
+    console.error("[Votação] " + onde, e);
+    if (DB.demo) return;
+    const caixa = $("#faixaDemo");
+    caixa.innerHTML = '<div class="faixa-demo"><div><b>Problema de ligação (' + esc(onde) + "):</b> " + esc(explicarErro(e)) +
+      ' <small style="opacity:.8">[' + esc((e && e.code) || "") + "] " + esc(String((e && e.message) || e || "").slice(0, 180)) + "</small></div></div>";
+  }
+  window.addEventListener("unhandledrejection", (ev) => mostrarFalha("pedido", ev.reason));
+
   DB.on("config", (c) => {
     config = c || {};
     const f = config.fase === "encerrada" ? "encerrada" : "fase1";
@@ -840,8 +859,8 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
     e.textContent = NOME_FASE[f];
     e.className = "estado " + f;
     if (!votante) desenharIdentificacao();
-  });
-  DB.on("votaram", (v) => { votaram = v || {}; if (!votante) actualizarNomes(); if (aba === "participacao") desenharDash(); }, () => {});
+  }, (e) => mostrarFalha("leitura do estado", e));
+  DB.on("votaram", (v) => { votaram = v || {}; if (!votante) actualizarNomes(); if (aba === "participacao") desenharDash(); }, (e) => mostrarFalha("leitura de quem votou", e));
 
   /* ---------- Separadores: Votar / Participação ---------- */
   let aba = "votar";
@@ -996,9 +1015,11 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
           '<div class="mensagem ok">' + icone("certo") + '<div><h3>Voto registado</h3><p>O seu voto foi atribuído a:</p><div class="escolhido">' + esc(p.nome) + '</div><p style="color:var(--cinza)">Registado em ' + dataHora(Date.now()) + ". Agradecemos a sua participação.</p></div></div>" +
           "");
       } catch (e) {
+        mostrarFalha("gravação do voto", e);
         const ja = !!votaram[votante.pid];
-        aviso(ja ? "Este nome já tinha votado." : "Não foi possível registar o voto. Este e-mail pode já ter sido usado, ou a votação foi encerrada.", "erro-t");
-        recomecar();
+        const motivo = ja ? "Este nome já tinha votado." : /permission/i.test((e && e.code) || "") ? "O voto foi recusado. Este e-mail pode já ter sido usado, a votação pode estar encerrada, ou as regras do Firestore não estão publicadas." : explicarErro(e);
+        mostrar(cabecalho() + '<div class="mensagem v">' + icone("cadeado", "v") + '<div><h3>Não foi possível registar o voto</h3><p>' + esc(motivo) + '</p><p style="color:var(--cinza);font-size:13px">Código: ' + esc((e && e.code) || "-") + " · " + esc(String((e && e.message) || e || "").slice(0, 200)) + '</p></div></div><div class="acoes"><button class="btn btn-sec" id="btnFim">Voltar ao início</button></div>');
+        $("#btnFim").onclick = recomecar;
       }
     };
   }
