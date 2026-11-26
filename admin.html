@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel da votação · DPCM</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/simbolo.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&family=PT+Sans:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&display=swap">
+<link rel="stylesheet" href="css/estilo.css">
+<link rel="stylesheet" href="css/painel.css">
+</head>
+<body>
+<div id="faixaDemo"></div>
+<header class="topo">
+  <div class="topo-in">
+    <img src="assets/logo-dpcm-negativo.png" alt="Instituto Nacional de Saúde, DPCM">
+    <div class="rotulo"><b>Painel da votação</b><span id="quem"></span></div>
+  </div>
+</header>
+<div id="malhaTopo"></div>
+
+<main>
+  <section id="ecraLogin" class="login" hidden>
+    <div class="cartao">
+      <h2>Acesso da organização</h2>
+      <p class="ajuda">Use a conta de administrador criada no Firebase.</p>
+      <form id="formLogin">
+        <label class="campo" for="email">E-mail</label>
+        <input class="texto" id="email" type="email" autocomplete="username">
+        <label class="campo" for="senha" style="margin-top:12px">Palavra-passe</label>
+        <input class="texto" id="senha" type="password" autocomplete="current-password">
+        <div class="erro" id="erroLogin"></div>
+        <button class="btn btn-pri btn-larg" type="submit">Entrar</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="ecraPainel" hidden>
+    <nav class="abas" id="abas">
+      <button data-aba="estado" class="ativa">Estado e participação</button>
+      <button data-aba="codigos">Preparação e códigos</button>
+      <button data-aba="fase1">1ª fase e finalistas</button>
+      <button data-aba="final">Resultado final</button>
+    </nav>
+
+    <div class="aba" id="aba-estado">
+      <div class="grelha-2">
+        <div class="bloco">
+          <h2>Fase da votação</h2>
+          <p class="ajuda">A mudança vale de imediato para todos os que estiverem com a página aberta.</p>
+          <div class="fases" id="fases"></div>
+          <label class="interruptor"><input type="checkbox" id="chefesFase1"> <span>Os chefes também votam na 1ª fase</span></label>
+        </div>
+        <div class="bloco numeros" id="numeros"></div>
+      </div>
+      <div class="bloco">
+        <h2>Participação por sector</h2>
+        <table class="tabela" id="tabParticipacao"></table>
+        <p class="ajuda" id="notaExcluidos"></p>
+      </div>
+    </div>
+
+    <div class="aba" id="aba-codigos" hidden>
+      <div class="bloco">
+        <h2>Preparar a votação</h2>
+        <ol class="etapas">
+          <li><div><b>Carregar a lista de candidatos</b><span>Grava na base de dados quem pode ser votado em cada sector (sem chefes).</span><span class="st" id="stCand"></span></div><button class="btn btn-azul btn-peq" id="btnCand">Carregar</button></li>
+          <li><div><b>Gerar os códigos pessoais</b><span>Um código por funcionário dos sectores que participam. Quem já tem código mantém o mesmo.</span><span class="st" id="stCod"></span></div><button class="btn btn-azul btn-peq" id="btnCod">Gerar</button></li>
+          <li><div><b>Distribuir os códigos</b><span>Imprima os cartões e entregue-os em mão, ou envie a lista a cada chefe de sector.</span></div><span class="grupo-btn"><button class="btn btn-sec btn-peq" id="btnImprimir">Imprimir cartões</button><button class="btn btn-sec btn-peq" id="btnExpCod">Excel</button></span></li>
+        </ol>
+      </div>
+      <div class="bloco">
+        <h2>Lista de códigos</h2>
+        <input class="texto" id="buscaCod" placeholder="Procurar nome, sector ou código" style="max-width:380px;margin-bottom:12px">
+        <div class="rolar"><table class="tabela" id="tabCodigos"></table></div>
+      </div>
+      <div class="bloco perigo">
+        <h2>Apagar votos</h2>
+        <p class="ajuda">Use antes do lançamento para limpar os votos de teste. Os códigos mantêm-se.</p>
+        <button class="btn btn-sec btn-peq" id="btnLimpar">Apagar todos os votos e finalistas</button>
+      </div>
+    </div>
+
+    <div class="aba" id="aba-fase1" hidden>
+      <div class="bloco">
+        <div class="cab-bloco"><h2>Contagem da 1ª fase</h2><button class="btn btn-pri btn-peq" id="btnPublicar">Publicar finalistas</button></div>
+        <p class="ajuda" id="notaFinalistas"></p>
+        <div class="setores" id="contagem1"></div>
+      </div>
+    </div>
+
+    <div class="aba" id="aba-final" hidden>
+      <div class="bloco">
+        <div class="cab-bloco"><h2>Resultado por sector</h2><button class="btn btn-azul btn-peq" id="btnExpRes">Exportar resultados (Excel)</button></div>
+        <p class="ajuda">Ordem: votos dos chefes na 2ª fase; em caso de empate, conta a 1ª fase. Sem chefes no sector, decide a 1ª fase.</p>
+        <div class="setores" id="resultado"></div>
+      </div>
+    </div>
+    <p style="text-align:right;margin-top:24px"><button class="link" id="btnSairAdmin">Terminar sessão</button></p>
+  </section>
+</main>
+
+<div id="malhaBase"></div>
+<footer><div><span>Delegação Provincial da Cidade de Maputo · Instituto Nacional de Saúde</span><a href="index.html" style="color:#fff">Página de voto</a></div></footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/db.js"></script>
+<script src="js/painel.js"></script>
+</body>
+</html>

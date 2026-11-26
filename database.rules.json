@@ -1,0 +1,46 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "config": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
+      "fase": { ".validate": "newData.isString() && newData.val().matches(/^(fechada|fase1|fase2|encerrada)$/)" },
+      "chefesFase1": { ".validate": "newData.isBoolean()" },
+      "$outro": { ".validate": false }
+    },
+    "candidatos": { ".read": true, ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'" },
+    "finalistas": { ".read": true, ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'" },
+    "codigos": {
+      ".read": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
+      ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
+      "$cod": { ".read": true }
+    },
+    "votos1": {
+      ".read": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
+      ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
+      "$cod": {
+        ".read": true,
+        ".write": "!data.exists() && newData.exists() && root.child('config/fase').val() === 'fase1' && root.child('codigos/' + $cod).exists() && (root.child('codigos/' + $cod + '/chefe').val() === false || root.child('config/chefesFase1').val() === true)",
+        ".validate": "newData.hasChildren(['setor', 'candidato', 'ts']) && newData.child('setor').val() === root.child('codigos/' + $cod + '/setor').val() && newData.child('candidato').isString() && newData.child('candidato').val().matches(/^[a-z0-9]+$/) && newData.child('candidato').val() !== root.child('codigos/' + $cod + '/pid').val() && root.child('candidatos/' + newData.child('setor').val() + '/' + newData.child('candidato').val()).val() === true",
+        "setor": { ".validate": "newData.isString()" },
+        "candidato": { ".validate": "newData.isString()" },
+        "ts": { ".validate": "newData.val() === now" },
+        "$outro": { ".validate": false }
+      }
+    },
+    "votos2": {
+      ".read": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
+      ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
+      "$cod": {
+        ".read": true,
+        ".write": "!data.exists() && newData.exists() && root.child('config/fase').val() === 'fase2' && root.child('codigos/' + $cod + '/chefe').val() === true",
+        ".validate": "newData.hasChildren(['setor', 'candidato', 'ts']) && newData.child('setor').val() === root.child('codigos/' + $cod + '/setor').val() && newData.child('candidato').isString() && newData.child('candidato').val().matches(/^[a-z0-9]+$/) && newData.child('candidato').val() !== root.child('codigos/' + $cod + '/pid').val() && root.child('finalistas/' + newData.child('setor').val() + '/' + newData.child('candidato').val()).exists()",
+        "setor": { ".validate": "newData.isString()" },
+        "candidato": { ".validate": "newData.isString()" },
+        "ts": { ".validate": "newData.val() === now" },
+        "$outro": { ".validate": false }
+      }
+    }
+  }
+}

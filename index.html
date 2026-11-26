@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funcionário em destaque 2026 · DPCM</title>
+<link rel="icon" href="assets/simbolo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&family=PT+Sans:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&display=swap">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<div id="faixaDemo"></div>
+<header class="topo">
+  <div class="topo-in">
+    <img src="assets/logo-dpcm-negativo.png" alt="Instituto Nacional de Saúde, DPCM, Delegação Provincial da Cidade de Maputo">
+    <div class="rotulo"><b id="tituloTopo">Funcionário em destaque 2026</b>Votação interna</div>
+  </div>
+</header>
+<div id="malhaTopo"></div>
+
+<main id="app">
+  <section class="abertura" id="ecraEntrada">
+    <div>
+      <div class="estado" id="estado">A carregar…</div>
+      <div class="sobre" id="sobre">Funcionário em destaque 2026</div>
+      <h1>Quem se destacou no seu sector este ano?</h1>
+      <p class="lead">Cada funcionário vota uma vez num colega do seu próprio sector. Os mais votados passam à 2ª fase, em que os chefes do sector escolhem o funcionário em destaque.</p>
+      <ul class="passos" id="passos"></ul>
+    </div>
+    <div class="cartao">
+      <h2>Entre com o seu código</h2>
+      <p class="ajuda">O código está no cartão que recebeu da organização: 6 letras e números.</p>
+      <form id="formCodigo" autocomplete="off">
+        <label class="campo" for="codigo">Código pessoal</label>
+        <input class="codigo" id="codigo" maxlength="9" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="······">
+        <div class="erro" id="erroCodigo" role="alert"></div>
+        <button class="btn btn-pri btn-larg" type="submit" id="btnEntrar">Entrar</button>
+      </form>
+      <div class="nota"><span id="iconeCadeado"></span><span>Cada código só vota uma vez por fase. Depois de confirmar, o voto não pode ser alterado.</span></div>
+      <div id="demoCodigos"></div>
+    </div>
+  </section>
+  <section class="boletim" id="ecraBoletim" hidden></section>
+</main>
+
+<div id="malhaBase"></div>
+<footer><div><span>Delegação Provincial da Cidade de Maputo · Instituto Nacional de Saúde</span><span>Dúvidas: dirija-se ao seu chefe de sector</span></div></footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/db.js"></script>
+<script src="js/votar.js"></script>
+</body>
+</html>
