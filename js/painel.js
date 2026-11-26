@@ -1,20 +1,21 @@
 (function () {
   const $ = (s) => document.querySelector(s);
-  const { SETOR, PESSOA, ativos, esc, faixa, confirmar, aviso, NOME_FASE, semAcentos, dataHora } = VOT;
-  const D = { config: {}, pessoas: {}, registos: {}, votos1: {}, votos2: {}, finalistas: {} };
+  const { SETOR, PESSOA, ativos, esc, faixa, confirmar, aviso, semAcentos, dataHora } = VOT;
+  const D = { config: {}, pessoas: {}, votos: {} };
   const desligar = [];
   const URL_VOTO = location.href.replace(/admin\.html.*$/, "");
+  const chaveEmail = (e) => String(e).toLowerCase().replace(/\./g, ",");
 
   $("#malhaTopo").innerHTML = faixa(60, 28, 3);
   $("#malhaBase").innerHTML = faixa(80, 22, 9).replace('class="malha"', 'class="malha malha-base"');
   $("#stUrl").textContent = URL_VOTO;
   if (DB.demo) {
     DB.semear();
-    $("#faixaDemo").innerHTML = '<div class="faixa-demo"><div><b>Modo de demonstração.</b> Qualquer e-mail @ins.gov.mz entra (a conta é criada na hora). Os dados ficam só neste navegador. <button class="link" id="btnReDemo">Recomeçar a demonstração</button></div></div>';
+    $("#faixaDemo").innerHTML = '<div class="faixa-demo"><div><b>Modo de demonstração.</b> Qualquer e-mail @ins.gov.mz entra no painel. Os dados ficam só neste navegador. <button class="link" id="btnReDemo">Recomeçar a demonstração</button></div></div>';
     $("#btnReDemo").onclick = () => { DB.reiniciarDemo(); location.reload(); };
   }
 
-  /* ---------- Sessão ---------- */
+  /* ---------- Sessão (só a organização) ---------- */
   DB.auth.aoMudar((u) => {
     desligar.splice(0).forEach((f) => f());
     $("#ecraLogin").hidden = !!u;
@@ -51,122 +52,98 @@
     document.querySelectorAll(".aba").forEach((x) => (x.hidden = x.id !== "aba-" + a));
   });
 
-  /* ---------- Cálculos ---------- */
-  const regs = () => Object.entries(D.registos).filter(([, r]) => r && PESSOA[r.pid]);
-  const porPid = () => { const m = {}; regs().forEach(([uid, r]) => (m[r.pid] = Object.assign({ uid }, r))); return m; };
-  const podeFase1 = () => true; // todos os funcionários do sector, chefes incluídos, votam na 1.ª fase
   const pct = (a, b) => (b ? Math.round((100 * a) / b) : 0);
   const medidor = (p, v) => '<div class="medidor' + (v ? " v" : "") + '"><i style="width:' + p + '%"></i></div>';
-  function porSetor(sid) {
-    const m = porPid(), s = SETOR[sid];
-    const el1 = s.pessoas.filter(podeFase1), chefes = s.pessoas.filter((p) => p.chefe);
-    const reg = s.pessoas.filter((p) => m[p.id]).length;
-    const v1 = el1.filter((p) => m[p.id] && D.votos1[m[p.id].uid]).length;
-    const v2 = chefes.filter((p) => m[p.id] && D.votos2[m[p.id].uid]).length;
-    return { total: s.pessoas.length, reg, el1: el1.length, v1, ch: chefes.length, v2 };
-  }
+  const votosValidos = () => Object.entries(D.votos).filter(([pid, v]) => v && PESSOA[pid]);
 
-  function desenhar() {
-    desenharEstado();
-    desenharRegistos();
-    desenharFase1();
-    desenharFinal();
-  }
+  function desenhar() { desenharEstado(); desenharVotos(); desenharContagem(); desenharFinal(); }
 
+  /* ---------- Estado e participação ---------- */
   function desenharEstado() {
     const fase = D.config.fase === "encerrada" ? "encerrada" : "fase1";
     $("#fases").innerHTML = ["fase1", "encerrada"].map((f) =>
       '<button data-f="' + f + '" class="' + (f === fase ? "ativa" : "") + '">' + { fase1: "Aberta", encerrada: "Encerrada" }[f] + "</button>").join("");
-    const t = { total: 0, reg: 0, el1: 0, v1: 0, ch: 0, v2: 0 };
+    let total = 0, votaram = 0;
     const linhas = ativos().map((s) => {
-      const x = porSetor(s.id);
-      Object.keys(t).forEach((k) => (t[k] += x[k]));
-      return "<tr><td><b>" + esc(s.curto) + '</b></td><td class="num">' + x.reg + " / " + x.total + '</td><td class="num">' + x.v1 + " / " + x.el1 + "</td><td>" + medidor(pct(x.v1, x.el1)) +
-        "</td></tr>";
+      const n = s.pessoas.length, v = s.pessoas.filter((p) => D.votos[p.id]).length;
+      total += n; votaram += v;
+      return "<tr><td><b>" + esc(s.curto) + '</b></td><td class="num">' + v + " / " + n + "</td><td>" + medidor(pct(v, n)) + '</td><td class="num">' + pct(v, n) + "%</td></tr>";
     }).join("");
-    $("#tabParticipacao").innerHTML = '<tr><th>Sector</th><th class="num">Registados</th><th class="num">Votaram</th><th></th></tr>' + linhas;
+    $("#tabParticipacao").innerHTML = '<tr><th>Sector</th><th class="num">Votaram</th><th></th><th class="num">%</th></tr>' + linhas;
     const fora = SETORES.filter((s) => !s.participa).map((s) => s.curto + " (" + s.pessoas.length + ")");
     $("#notaExcluidos").textContent = fora.length ? "Fora da votação por terem poucos funcionários: " + fora.join(", ") + "." : "";
-    const rever = regs().filter(([, r]) => !VOT.emailCorresponde(r.email, PESSOA[r.pid].nome)).length;
+    const rever = votosValidos().filter(([pid, v]) => !VOT.emailCorresponde(v.email, PESSOA[pid].nome)).length;
     $("#numeros").innerHTML =
-      '<div><div class="n">' + t.reg + '</div><div class="l">registados, de ' + t.total + " funcionários</div></div>" +
-      '<div><div class="n">' + t.v1 + '</div><div class="l">votos registados</div></div>' +
-      '<div><div class="n v">' + pct(t.v1, t.el1) + '%</div><div class="l">participação, de ' + t.el1 + " funcionários</div></div>" +
-      '<div><div class="n' + (rever ? " v" : "") + '">' + rever + '</div><div class="l">registos a rever (e-mail não corresponde ao nome)</div></div>';
+      '<div><div class="n">' + votaram + '</div><div class="l">votos registados</div></div>' +
+      '<div><div class="n">' + pct(votaram, total) + '%</div><div class="l">participação, de ' + total + " funcionários</div></div>" +
+      '<div><div class="n">' + (total - votaram) + '</div><div class="l">por votar</div></div>' +
+      '<div><div class="n' + (rever ? " v" : "") + '">' + rever + '</div><div class="l">votos a rever (e-mail não corresponde ao nome)</div></div>';
   }
-
   $("#fases").addEventListener("click", async (e) => {
     const f = e.target.dataset.f;
     const atual = D.config.fase === "encerrada" ? "encerrada" : "fase1";
     if (!f || f === atual) return;
-    let extra = "";
-    const ok = await confirmar(f === "encerrada" ? "Encerrar a votação?" : "Reabrir a votação?", "<p>A alteração tem efeito imediato para todos os utilizadores.</p>" + extra, f === "encerrada" ? "Encerrar" : "Reabrir");
+    const ok = await confirmar(f === "encerrada" ? "Encerrar a votação?" : "Reabrir a votação?", "<p>A alteração tem efeito imediato para todos os utilizadores.</p>", f === "encerrada" ? "Encerrar" : "Reabrir");
     if (ok) await DB.update("config", { fase: f });
   });
 
-  /* ---------- Registos ---------- */
-  function linhasRegistos() {
-    const m = porPid(), r = [];
+  /* ---------- Votantes (quem votou e com que e-mail; nunca em quem) ---------- */
+  function linhasVotantes() {
+    const r = [];
     ativos().forEach((s) => s.pessoas.forEach((p) => {
-      const g = m[p.id];
-      r.push({
-        pid: p.id, uid: g && g.uid, setor: s.curto, nome: p.nome, categoria: p.categoria, chefe: p.chefe,
-        email: g ? g.email : "", data: g ? g.ts : null, rever: g ? !VOT.emailCorresponde(g.email, p.nome) : false,
-        v1: g && D.votos1[g.uid] ? "Sim" : "Não", v2: p.chefe ? (g && D.votos2[g.uid] ? "Sim" : "Não") : "—",
-      });
+      const v = D.votos[p.id];
+      r.push({ pid: p.id, setor: s.curto, nome: p.nome, categoria: p.categoria, chefe: p.chefe, email: v ? v.email : "", data: v ? v.ts : null, votou: !!v, rever: v ? !VOT.emailCorresponde(v.email, p.nome) : false });
     }));
     return r;
   }
-  function desenharRegistos() {
+  function desenharVotos() {
     const n = Object.keys(D.pessoas).length;
-    $("#stCand").textContent = n ? n + " pessoas carregadas." : "Ainda não carregada.";
+    $("#stCand").textContent = n ? n + " pessoas carregadas." : "Ainda não carregada. Sem este passo ninguém consegue votar.";
     const q = semAcentos($("#buscaCod").value || ""), f = $("#filtroReg").value;
-    const linhas = linhasRegistos()
-      .filter((r) => f === "todos" || (f === "sim" && r.uid) || (f === "nao" && !r.uid) || (f === "rever" && r.rever))
+    const linhas = linhasVotantes()
+      .filter((r) => f === "todos" || (f === "sim" && r.votou) || (f === "nao" && !r.votou) || (f === "rever" && r.rever))
       .filter((r) => !q || semAcentos([r.setor, r.nome, r.email].join(" ")).includes(q))
       .map((r) => "<tr><td>" + esc(r.setor) + "</td><td>" + esc(r.nome) + (r.chefe ? ' <span class="etq v">chefe</span>' : "") + "</td><td>" +
-        (r.uid ? '<span class="email">' + esc(r.email) + "</span>" + (r.rever ? '<div class="alerta">e-mail não corresponde ao nome</div>' : "") : '<span style="color:var(--cinza)">por registar</span>') +
-        '</td><td>' + (r.data ? esc(dataHora(r.data)) : "") + "</td><td>" + r.v1 + '</td><td class="grupo-btn">' +
-        (r.uid ? '<button class="btn btn-sec btn-peq" data-anular="' + esc(r.uid) + '" data-pid="' + esc(r.pid) + '">Anular</button>' : "") + "</td></tr>").join("");
-    $("#tabCodigos").innerHTML = "<tr><th>Sector</th><th>Nome</th><th>E-mail</th><th>Registo</th><th>Votou</th><th></th></tr>" + (linhas || '<tr><td colspan="6" class="vazio">Nada a mostrar.</td></tr>');
+        (r.votou ? '<span class="email">' + esc(r.email) + "</span>" + (r.rever ? '<div class="alerta">e-mail não corresponde ao nome</div>' : "") : '<span style="color:var(--cinza)">ainda não votou</span>') +
+        "</td><td>" + (r.data ? esc(dataHora(r.data)) : "") + "</td><td>" +
+        (r.votou ? '<button class="btn btn-sec btn-peq" data-anular="' + esc(r.pid) + '">Anular voto</button>' : "") + "</td></tr>").join("");
+    $("#tabCodigos").innerHTML = "<tr><th>Sector</th><th>Nome</th><th>E-mail usado</th><th>Data</th><th></th></tr>" + (linhas || '<tr><td colspan="5" class="vazio">Nada a mostrar.</td></tr>');
   }
-  $("#buscaCod").addEventListener("input", desenharRegistos);
-  $("#filtroReg").addEventListener("change", desenharRegistos);
+  $("#buscaCod").addEventListener("input", desenharVotos);
+  $("#filtroReg").addEventListener("change", desenharVotos);
   $("#tabCodigos").addEventListener("click", async (e) => {
-    const uid = e.target.dataset && e.target.dataset.anular;
-    if (!uid) return;
-    const pid = e.target.dataset.pid, r = D.registos[uid];
-    const ok = await confirmar("Anular este registo?", "<p><b>" + esc(PESSOA[pid].nome) + "</b> deixa de estar ligado a <b>" + esc(r.email) + "</b>. Os votos feitos com esta conta são apagados.</p><p style=\"color:var(--cinza)\">O titular do nome poderá depois registar-se com o seu próprio e-mail.</p>", "Anular", true);
+    const pid = e.target.dataset && e.target.dataset.anular;
+    if (!pid) return;
+    const v = D.votos[pid];
+    const ok = await confirmar("Anular este voto?", "<p>O voto feito em nome de <b>" + esc(PESSOA[pid].nome) + "</b> com o e-mail <b>" + esc(v.email) + "</b> é apagado.</p><p style=\"color:var(--cinza)\">O nome e o e-mail ficam livres para votar de novo.</p>", "Anular", true);
     if (!ok) return;
-    await DB.update("", { ["registos/" + uid]: null, ["ocupados/" + pid]: null, ["votos1/" + uid]: null, ["votos2/" + uid]: null });
-    aviso("Registo anulado.");
+    await DB.update("", { ["votos/" + pid]: null, ["votaram/" + pid]: null, ["emails/" + chaveEmail(v.email)]: null });
+    aviso("Voto anulado.");
   });
   $("#btnCand").onclick = async () => { await DB.set("pessoas", VOT.mapaPessoas()); aviso("Lista de pessoal carregada."); };
-  $("#btnCopiar").onclick = async () => {
-    try { await navigator.clipboard.writeText(URL_VOTO); aviso("Endereço copiado."); } catch (e) { aviso(URL_VOTO); }
-  };
+  $("#btnCopiar").onclick = async () => { try { await navigator.clipboard.writeText(URL_VOTO); aviso("Endereço copiado."); } catch (e) { aviso(URL_VOTO); } };
   $("#btnExpReg").onclick = () => {
-    const d = [["Sector", "Nome", "Categoria", "Chefe", "E-mail", "Data do registo", "E-mail não corresponde ao nome", "Votou"]]
-      .concat(linhasRegistos().map((r) => [r.setor, r.nome, r.categoria, r.chefe ? "Sim" : "Não", r.email, r.data ? dataHora(r.data) : "", r.rever ? "Sim" : "", r.v1]));
+    const d = [["Sector", "Nome", "Categoria", "Chefe", "Votou", "E-mail usado", "Data", "E-mail não corresponde ao nome"]]
+      .concat(linhasVotantes().map((r) => [r.setor, r.nome, r.categoria, r.chefe ? "Sim" : "Não", r.votou ? "Sim" : "Não", r.email, r.data ? dataHora(r.data) : "", r.rever ? "Sim" : ""]));
     const ws = XLSX.utils.aoa_to_sheet(d);
-    ws["!cols"] = [{ wch: 14 }, { wch: 42 }, { wch: 32 }, { wch: 7 }, { wch: 34 }, { wch: 20 }, { wch: 9 }, { wch: 13 }, { wch: 13 }];
+    ws["!cols"] = [{ wch: 14 }, { wch: 42 }, { wch: 32 }, { wch: 7 }, { wch: 7 }, { wch: 34 }, { wch: 20 }, { wch: 12 }];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Registos");
-    XLSX.writeFile(wb, "registos_votacao_DPCM.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Votantes");
+    XLSX.writeFile(wb, "votantes_DPCM.xlsx");
   };
   $("#btnLimpar").onclick = async () => {
-    const ok = await confirmar("Apagar todos os votos?", "<p>Apaga os votos das duas fases e os finalistas publicados. Não há forma de recuperar.</p>", "Apagar", true);
+    const ok = await confirmar("Apagar todos os votos?", "<p>Apaga todos os votos registados. Não há forma de recuperar.</p>", "Apagar", true);
     if (!ok) return;
-    await DB.update("", { votos1: null, votos2: null, finalistas: null });
+    await DB.update("", { votos: null, votaram: null, emails: null });
     aviso("Votos apagados.");
   };
 
-  /* ---------- 1.ª fase ---------- */
-  function desenharFase1() {
+  /* ---------- Contagem ---------- */
+  function desenharContagem() {
     $("#notaFinalistas").textContent = "Votos por sector, do mais votado para o menos votado. Os " + N_FINALISTAS + " primeiros (e empatados) aparecem a negrito.";
     $("#contagem1").innerHTML = ativos().map((s) => {
-      const c = VOT.contar(D.votos1, s.id);
-      const fin = VOT.calcularFinalistas(D.votos1, s.id, N_FINALISTAS);
+      const c = VOT.contar(D.votos, s.id);
+      const fin = VOT.calcularFinalistas(D.votos, s.id, N_FINALISTAS);
       const ord = Object.entries(c).sort((a, b) => b[1] - a[1]);
       const max = ord.length ? ord[0][1] : 1;
       const total = ord.reduce((a, x) => a + x[1], 0);
@@ -174,38 +151,26 @@
       return '<div class="setor-cx"><h3>' + esc(s.curto) + '</h3><div class="sub">' + total + " votos" + (ord.length > 12 ? " · mostra os 12 primeiros" : "") + '</div><ul class="rank">' + (li || '<li class="vazio">Sem votos ainda.</li>') + "</ul></div>";
     }).join("");
   }
-  $("#btnPublicar").onclick = async () => {
-    const f = {};
-    ativos().forEach((s) => { const x = VOT.calcularFinalistas(D.votos1, s.id, N_FINALISTAS); if (Object.keys(x).length) f[s.id] = x; });
-    const resumo = ativos().map((s) => "<li><b>" + esc(s.curto) + ":</b> " + (f[s.id] ? Object.keys(f[s.id]).map((id) => esc(PESSOA[id].nome)).join(", ") : "sem votos") + "</li>").join("");
-    const ok = await confirmar("Publicar finalistas?", '<ul style="padding-left:18px;font-size:15px">' + resumo + "</ul><p>Os chefes passam a ver estes nomes quando a 2.ª fase abrir. Pode publicar de novo se a contagem mudar.</p>", "Publicar");
-    if (!ok) return;
-    await DB.set("finalistas", f);
-    aviso("Finalistas publicados.");
-  };
 
   /* ---------- Resultado ---------- */
   function desenharFinal() {
     $("#resultado").innerHTML = ativos().map((s) => {
-      const r = VOT.resultado(s.id, D.votos1, {}, {});
+      const r = VOT.resultado(s.id, D.votos, {}, {});
       const top = r.lista[0];
-      const ch = s.pessoas.filter((p) => p.chefe).length;
       const cab = !top ? '<div class="vazio">Sem votos.</div>' :
         '<div class="vencedor"><div class="t">' + (r.empate ? "Empate" : "Mais votado") + '</div><div class="nm">' +
-        (r.empate ? r.lista.filter((x) => x.v1 === top.v1 && x.v2 === top.v2).map((x) => esc(PESSOA[x.id].nome)).join(" / ") : esc(PESSOA[top.id].nome)) + "</div></div>";
+        (r.empate ? r.lista.filter((x) => x.v1 === top.v1).map((x) => esc(PESSOA[x.id].nome)).join(" / ") : esc(PESSOA[top.id].nome)) + "</div></div>";
       const li = r.lista.map((x) => '<li><span class="nome">' + esc(PESSOA[x.id].nome) + '</span><span class="v">' + x.v1 + ' <small style="color:var(--cinza);font-weight:400">votos</small></span></li>').join("");
-      return '<div class="setor-cx"><h3>' + esc(s.curto) + '</h3><div class="sub">' + (s.pessoas.length + " funcionários") + "</div>" + cab + '<ul class="rank">' + li + "</ul></div>";
+      return '<div class="setor-cx"><h3>' + esc(s.curto) + '</h3><div class="sub">' + s.pessoas.length + " funcionários</div>" + cab + '<ul class="rank">' + li + "</ul></div>";
     }).join("");
   }
   $("#btnExpRes").onclick = () => {
     const wb = XLSX.utils.book_new();
     const res = [["Sector", "Posição", "Nome", "Categoria", "Votos"]];
-    ativos().forEach((s) => VOT.resultado(s.id, D.votos1, {}, {}).lista.forEach((x, i) => res.push([s.curto, i + 1, PESSOA[x.id].nome, PESSOA[x.id].categoria, x.v1])));
-    const f1 = [["Sector", "Nome", "Categoria", "Votos"]];
-    ativos().forEach((s) => Object.entries(VOT.contar(D.votos1, s.id)).sort((a, b) => b[1] - a[1]).forEach(([id, v]) => f1.push([s.curto, PESSOA[id].nome, PESSOA[id].categoria, v])));
-    const part = [["Sector", "Funcionários", "Registados", "Votaram"]];
-    ativos().forEach((s) => { const x = porSetor(s.id); part.push([s.curto, x.total, x.reg, x.v1]); });
-    [["Resultado", res], ["Votos", f1], ["Participação", part]].forEach(([n, d]) => { const ws = XLSX.utils.aoa_to_sheet(d); ws["!cols"] = d[0].map((h, i) => ({ wch: (n === "Resultado" ? i === 2 : i === 1) ? 42 : 16 })); XLSX.utils.book_append_sheet(wb, ws, n); });
+    ativos().forEach((s) => VOT.resultado(s.id, D.votos, {}, {}).lista.forEach((x, i) => res.push([s.curto, i + 1, PESSOA[x.id].nome, PESSOA[x.id].categoria, x.v1])));
+    const part = [["Sector", "Funcionários", "Votaram"]];
+    ativos().forEach((s) => part.push([s.curto, s.pessoas.length, s.pessoas.filter((p) => D.votos[p.id]).length]));
+    [["Resultado", res], ["Participação", part]].forEach(([n, d]) => { const ws = XLSX.utils.aoa_to_sheet(d); ws["!cols"] = d[0].map((h, i) => ({ wch: n === "Resultado" && i === 2 ? 42 : 16 })); XLSX.utils.book_append_sheet(wb, ws, n); });
     XLSX.writeFile(wb, "resultados_votacao_DPCM.xlsx");
   };
 })();

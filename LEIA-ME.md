@@ -11,17 +11,14 @@ Sem o Firebase configurado, o site abre em modo de demonstração: as contas e o
 
 ## Como funciona
 
-A votação está sempre aberta: não há estado "por abrir", e quem conclui o registo segue directamente para o boletim da fase em curso.
+1. O funcionário abre o site, selecciona o departamento ou unidade e o seu nome, e indica o e-mail institucional (@ins.gov.mz). Não há conta, palavra-passe nem login.
+2. Escolhe numa lista um colega do mesmo departamento ou unidade e confirma o voto num ecrã que mostra o nome, a categoria e o departamento do colega.
+3. Os chefes (a amarelo na lista de pessoal) votam, mas não aparecem como candidatos. Ninguém vota em si próprio.
+4. Resultado: o mais votado de cada departamento ou unidade.
 
-1. **Registo.** No formulário de registo, cada funcionário selecciona o sector e o nome em listas, indica o e-mail @ins.gov.mz e uma palavra-passe. Em seguida vê os dados escolhidos, já bloqueados, conclui o registo e segue para a votação. Não há confirmação por e-mail. Cada nome só pode ficar ligado a uma conta, e o sector e o nome não podem ser alterados depois.
-2. **1.ª fase.** Cada funcionário escolhe numa lista um colega do seu sector e confirma o voto num ecrã que mostra o nome, a categoria e o sector da pessoa escolhida. Os chefes (a amarelo na lista) também votam, mas não aparecem como candidatos. Ninguém vota em si próprio.
-3. A organização publica os finalistas: os 3 mais votados de cada sector (quem empata com o 3.º também passa).
-4. **2.ª fase.** Só os chefes votam, cada um nos finalistas do seu sector.
-5. **Resultado.** Ganha quem tem mais votos dos chefes; se houver empate, conta a 1.ª fase. Na UGD não há chefes marcados, por isso decide a 1.ª fase.
+As regras do Firebase garantem, no servidor: um único voto por nome, um único voto por e-mail, só e-mails @ins.gov.mz, voto apenas num colega do mesmo sector que não seja chefe nem o próprio, e nenhum voto depois de a votação ser encerrada.
 
-As regras do Firebase impedem, no servidor: contas de outros domínios,  registar um nome já ocupado ou mudar de nome depois do registo, votar duas vezes, votar num chefe ou em alguém de outro sector, votar em si próprio, votar fora da fase aberta e (2.ª fase) votar em quem não é finalista.
-
-O que as regras não conseguem saber é se o e-mail pertence mesmo à pessoa cujo nome foi escolhido. Para isso, o separador **Registos** do painel mostra o e-mail ligado a cada nome, assinala os casos em que o e-mail não lembra o nome e permite **Anular** um registo (os votos dessa conta são apagados).
+O que as regras não conseguem saber é se o e-mail indicado pertence mesmo à pessoa cujo nome foi escolhido. O separador **Votantes** do painel mostra o e-mail usado em cada voto (nunca em quem votou), assinala os casos em que o e-mail não corresponde ao nome e permite **Anular voto**.
 
 Sectores fora da votação: DRH (3 pessoas) e UGEA (4 pessoas). Para incluir um sector, mude `"participa": false` para `true` em `js/dados.js`.
 

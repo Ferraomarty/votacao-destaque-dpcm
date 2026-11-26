@@ -11,7 +11,6 @@
     firebase.initializeApp(cfg);
     const db = firebase.database();
     const auth = firebase.auth();
-    auth.languageCode = "pt";
     const ligacao = () => ({ url: location.href.split("#")[0], handleCodeInApp: false });
     window.DB = {
       demo: false,
@@ -106,15 +105,20 @@
       if (!r.chefe || ler("finalistas/" + v.setor + "/" + v.candidato) === null) throw erro("PERMISSION_DENIED");
     }
   }
-  function validarRegisto(obj) {
-    const k = Object.keys(obj).find((x) => x.startsWith("registos/"));
+  /* Voto sem conta: votos/<pid>, votaram/<pid> e emails/<chave> têm de ser gravados juntos. */
+  function validarVotoSemConta(obj) {
+    const k = Object.keys(obj).find((x) => /^votos\/[a-z0-9]+$/.test(x));
     if (!k || obj[k] === null) return;
-    const uid = k.split("/")[1], r = obj[k];
-    if (!atual || atual.uid !== uid || ler(k)) throw erro("PERMISSION_DENIED");
-    if (!DOMINIO.test(atual.email)) throw erro("PERMISSION_DENIED");
-    const p = ler("pessoas/" + r.pid);
-    if (!p || p.setor !== r.setor || !!p.chefe !== !!r.chefe) throw erro("PERMISSION_DENIED");
-    if (ler("ocupados/" + r.pid) || obj["ocupados/" + r.pid] !== uid) throw erro("PERMISSION_DENIED");
+    const pid = k.split("/")[1], v = obj[k], conf = ler("config") || {};
+    const nega = () => { throw erro("PERMISSION_DENIED"); };
+    if (ler(k) || conf.fase === "encerrada") nega();
+    const p = ler("pessoas/" + pid);
+    if (!p || !v || v.setor !== p.setor || typeof v.email !== "string" || !/^[a-z0-9._%+-]+@ins\.gov\.mz$/.test(v.email.toLowerCase())) nega();
+    if (typeof v.candidato !== "string" || v.candidato === pid) nega();
+    const c = ler("pessoas/" + v.candidato);
+    if (!c || c.setor !== v.setor || c.chefe) nega();
+    const ch = v.email.toLowerCase().replace(/\./g, ",");
+    if (obj["votaram/" + pid] !== true || ler("emails/" + ch) || obj["emails/" + ch] !== pid) nega();
   }
 
   window.DB = {
@@ -124,7 +128,7 @@
     get: async (p) => ler(p),
     set: async (p, v) => { validar(p, v); escrever(p, v); gravar(); },
     update: async (p, obj) => {
-      if (!p) validarRegisto(obj);
+      if (!p) validarVotoSemConta(obj);
       for (const k in obj) escrever((p ? p + "/" : "") + k, obj[k]);
       gravar();
     },

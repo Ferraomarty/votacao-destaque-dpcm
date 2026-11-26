@@ -40,7 +40,7 @@
   <section id="ecraPainel" hidden>
     <nav class="abas" id="abas">
       <button data-aba="estado" class="ativa">Estado e participação</button>
-      <button data-aba="codigos">Registos</button>
+      <button data-aba="codigos">Votantes</button>
       <button data-aba="fase1">Contagem</button>
       <button data-aba="final">Resultado final</button>
     </nav>
@@ -66,22 +66,22 @@
         <h2>Preparar a votação</h2>
         <ol class="etapas">
           <li><div><b>Carregar a lista de pessoal</b><span>Grava na base de dados quem participa, o sector de cada um e quem é chefe.</span><span class="st" id="stCand"></span></div><button class="btn btn-azul btn-peq" id="btnCand">Carregar</button></li>
-          <li><div><b>Divulgar o endereço</b><span>Envie este endereço aos funcionários. Cada funcionário regista-se com o e-mail @ins.gov.mz, seleccionando o sector e o nome.</span><span class="st" id="stUrl"></span></div><button class="btn btn-sec btn-peq" id="btnCopiar">Copiar endereço</button></li>
+          <li><div><b>Divulgar o endereço</b><span>Envie este endereço aos funcionários. Cada um selecciona o departamento ou unidade, o nome e o e-mail @ins.gov.mz, e vota.</span><span class="st" id="stUrl"></span></div><button class="btn btn-sec btn-peq" id="btnCopiar">Copiar endereço</button></li>
         </ol>
       </div>
       <div class="bloco">
-        <div class="cab-bloco"><h2>Registos</h2><button class="btn btn-sec btn-peq" id="btnExpReg">Exportar (Excel)</button></div>
-        <p class="ajuda">Verifique se o e-mail de cada registo pertence ao funcionário indicado. Os casos em que o e-mail não corresponde ao nome são assinalados. A anulação de um registo elimina também os votos dessa conta.</p>
+        <div class="cab-bloco"><h2>Votantes</h2><button class="btn btn-sec btn-peq" id="btnExpReg">Exportar (Excel)</button></div>
+        <p class="ajuda">Mostra quem já votou e com que e-mail, mas nunca em quem. Os votos com um e-mail que não corresponde ao nome são assinalados; se não forem da pessoa indicada, anule-os.</p>
         <div class="filtros">
           <input class="texto" id="buscaCod" placeholder="Procurar nome, sector ou e-mail">
-          <select class="texto" id="filtroReg"><option value="todos">Todos</option><option value="sim">Registados</option><option value="nao">Por registar</option><option value="rever">E-mail a rever</option></select>
+          <select class="texto" id="filtroReg"><option value="todos">Todos</option><option value="sim">Já votaram</option><option value="nao">Ainda não votaram</option><option value="rever">A rever</option></select>
         </div>
         <div class="rolar"><table class="tabela" id="tabCodigos"></table></div>
       </div>
       <div class="bloco perigo">
         <h2>Apagar votos</h2>
-        <p class="ajuda">Destina-se a eliminar os votos de teste antes do início da votação. Os registos são mantidos.</p>
-        <button class="btn btn-sec btn-peq" id="btnLimpar">Apagar todos os votos e finalistas</button>
+        <p class="ajuda">Destina-se a eliminar os votos de teste antes de divulgar a votação.</p>
+        <button class="btn btn-sec btn-peq" id="btnLimpar">Apagar todos os votos</button>
       </div>
     </div>
 
