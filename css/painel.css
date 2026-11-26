@@ -1,72 +1,69 @@
-.login { max-width: 440px; margin: 20px auto; }
+main.painel { max-width: 1160px; margin: 0 auto; padding: 34px 28px 50px; }
+.login { max-width: 460px; margin: 10px auto; }
+.login .cartao { background: var(--g-nevoa); border: 1px solid var(--azul15); }
+.login h2 { color: var(--pet); }
 .abas { display: flex; gap: 4px; border-bottom: 2px solid var(--azul15); margin-bottom: 26px; flex-wrap: wrap; }
-.abas button { background: none; border: 0; padding: 10px 16px; font-family: var(--titulo); font-size: 19px; font-weight: 700; color: var(--cinza); cursor: pointer; border-bottom: 4px solid transparent; margin-bottom: -3px; }
-.abas button.ativa { color: var(--azul); border-bottom-color: var(--verm); }
-.bloco { background: #fff; border: 1px solid var(--linha); padding: 22px 24px; margin-bottom: 22px; }
+.abas button { background: none; border: 0; padding: 10px 16px; font-family: var(--titulo); font-size: 19px; font-weight: 600; color: var(--cinza); cursor: pointer; border-bottom: 4px solid transparent; margin-bottom: -3px; }
+.abas button.ativa { color: var(--azul); border-image: var(--g-duo) 1; border-bottom-width: 4px; border-bottom-style: solid; }
+.bloco { background: rgba(255, 255, 255, .78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border: 1px solid var(--linha); border-radius: 10px; padding: 22px 24px; margin-bottom: 22px; }
 .bloco h2 { font-size: 26px; color: var(--pet); margin-bottom: 4px; }
+.bloco.perigo { border-left: 5px solid var(--verm); }
 .bloco .ajuda { color: var(--cinza); font-size: 15px; margin: 4px 0 14px; }
 .bloco.perigo { border-left: 6px solid var(--verm); }
 .cab-bloco { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .grelha-2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; }
 .grelha-2 .bloco { margin-bottom: 22px; }
-.fases { display: grid; grid-template-columns: repeat(4, 1fr); border: 2px solid var(--azul); border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
-.fases button { border: 0; border-right: 1px solid var(--azul40); background: #fff; padding: 12px 6px; font-family: var(--titulo); font-size: 17px; font-weight: 700; color: var(--azul); cursor: pointer; }
+.fases { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--azul); border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+.fases button { border: 0; border-right: 1px solid var(--azul40); background: #fff; padding: 12px 6px; font-family: var(--titulo); font-size: 17px; font-weight: 600; color: var(--azul); cursor: pointer; }
 .fases button:last-child { border-right: 0; }
-.fases button.ativa { background: var(--azul); color: #fff; }
+.fases button.ativa { background: var(--g-azul); color: #fff; }
 .interruptor { display: flex; gap: 10px; align-items: center; font-size: 16px; cursor: pointer; }
 .interruptor input { width: 18px; height: 18px; accent-color: var(--verm); }
-.numeros { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; background: var(--azul10); border-color: var(--azul15); }
-.numeros .n { font-family: var(--titulo); font-weight: 700; font-size: 44px; color: var(--azul); line-height: 1; }
-.numeros .n.v { color: var(--verm); }
-.numeros .l { font-size: 14px; color: var(--cinza); }
+.numeros { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: var(--g-azul); border: 0; position: relative; overflow: hidden; }
+.numeros::after { content: ""; position: absolute; right: -80px; bottom: -120px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(178, 32, 74, .45), rgba(178, 32, 74, 0) 65%); }
+.numeros::before { content: ""; position: absolute; left: 50%; top: 50%; width: 240px; height: 300px; transform: translate(-50%, -50%); background: url("../assets/simbolo-branco.png") no-repeat center / contain; opacity: .08; }
+.numeros > div { position: relative; z-index: 1; padding: 12px 14px; border-radius: 8px; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.numeros .n { font-family: var(--titulo); font-weight: 600; font-size: 40px; color: #fff; line-height: 1; }
+.numeros .n.v { color: var(--vluz); }
+.numeros .l { font-size: 13.5px; color: #CFE3E7; margin-top: 4px; }
 .tabela { width: 100%; border-collapse: collapse; font-size: 15.5px; }
 .tabela th { text-align: left; font-family: var(--titulo); font-size: 16px; color: var(--pet); background: var(--azul10); padding: 8px 10px; border-bottom: 2px solid var(--azul15); }
 .tabela td { padding: 8px 10px; border-bottom: 1px solid var(--linha); vertical-align: middle; }
 .tabela td.num, .tabela th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.tabela code { font-family: var(--titulo); font-weight: 700; font-size: 18px; letter-spacing: 2px; color: var(--pet); }
+.tabela code { font-family: var(--titulo); font-weight: 600; font-size: 18px; letter-spacing: 2px; color: var(--pet); }
 .medidor { height: 10px; background: var(--azul15); border-radius: 5px; overflow: hidden; min-width: 120px; }
-.medidor i { display: block; height: 100%; background: var(--azul); }
-.medidor.v i { background: var(--verm); }
+.medidor i { display: block; height: 100%; background: var(--g-azul); }
+.medidor.v i { background: var(--g-verm); }
 .rolar { max-height: 520px; overflow: auto; border: 1px solid var(--linha); }
 .rolar .tabela th { position: sticky; top: 0; }
 .etapas { list-style: none; counter-reset: e; margin: 10px 0 0; padding: 0; }
 .etapas li { counter-increment: e; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-top: 1px solid var(--linha); }
 .etapas li > div { display: grid; grid-template-columns: 36px 1fr; column-gap: 12px; }
-.etapas li > div::before { content: counter(e); grid-row: span 3; width: 30px; height: 30px; display: grid; place-items: center; background: var(--verm); color: #fff; font-family: var(--titulo); font-weight: 700; border-radius: 50% 50% 50% 0; }
+.etapas li > div::before { content: counter(e); grid-row: span 3; width: 30px; height: 30px; display: grid; place-items: center; background: var(--verm); color: #fff; font-family: var(--titulo); font-weight: 600; border-radius: 50% 50% 50% 0; }
 .etapas b { font-family: var(--titulo); font-size: 19px; color: var(--pet); }
 .etapas span { color: var(--cinza); font-size: 15px; }
-.etapas .st { color: var(--azul); font-weight: 700; }
+.etapas .st { color: var(--azul); font-weight: 600; }
 .grupo-btn { display: flex; gap: 8px; }
 .setores { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; }
-.setor-cx { border: 1px solid var(--linha); border-top: 5px solid var(--azul); padding: 16px 18px; }
+.setor-cx { border: 1px solid var(--linha); border-radius: 10px; padding: 16px 18px; position: relative; overflow: hidden; }
+.setor-cx::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--g-duo); }
 .setor-cx h3 { font-size: 22px; color: var(--pet); }
 .setor-cx .sub { color: var(--cinza); font-size: 14px; margin: 2px 0 10px; }
 .rank { list-style: none; margin: 0; padding: 0; }
 .rank li { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 7px 0; border-bottom: 1px dashed var(--linha); font-size: 15px; }
 .rank li .medidor { grid-column: 1 / -1; height: 6px; }
-.rank li.fin { font-weight: 700; }
-.rank li.fin .nome::after { content: "finalista"; margin-left: 8px; font-size: 12px; font-weight: 700; color: var(--verm); background: var(--verm10); padding: 1px 6px; border-radius: 8px; }
-.rank .v { font-family: var(--titulo); font-weight: 700; color: var(--azul); font-size: 17px; }
-.vencedor { background: var(--verm10); border-left: 5px solid var(--verm); padding: 10px 12px; margin-bottom: 10px; }
-.vencedor .t { font-size: 13px; color: var(--verm); font-weight: 700; }
-.vencedor .nm { font-family: var(--titulo); font-weight: 700; font-size: 24px; color: var(--pet); }
-.etq { font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 8px; background: var(--azul15); color: var(--pet); }
+.rank li.fin { font-weight: 600; }
+.rank li.fin .nome::after { content: "finalista"; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--verm); background: var(--verm10); padding: 1px 6px; border-radius: 8px; }
+.rank .v { font-family: var(--titulo); font-weight: 600; color: var(--azul); font-size: 17px; }
+.vencedor { background: var(--g-verm); color: #fff; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+.vencedor .t { font-size: 13px; color: #F7C9D6; font-weight: 600; }
+.vencedor .nm { font-family: var(--titulo); font-weight: 600; font-size: 23px; color: #fff; }
+.etq { font-size: 12px; font-weight: 600; padding: 2px 7px; border-radius: 8px; background: var(--azul15); color: var(--pet); }
 .etq.v { background: var(--verm15); color: var(--verm); }
 @media (max-width: 860px) { .grelha-2 { grid-template-columns: 1fr; } .fases { grid-template-columns: 1fr 1fr; } .etapas li { flex-direction: column; align-items: flex-start; } }
 
-/* Cartões de voto para imprimir (A4, 10 por folha) */
-#areaImpressao { display: none; }
-@media print {
-  @page { size: A4; margin: 10mm; }
-  body > *:not(#areaImpressao) { display: none !important; }
-  body { display: block; min-height: 0; }
-  #areaImpressao { display: block; }
-  #areaImpressao .g { display: grid; grid-template-columns: 1fr 1fr; }
-  #areaImpressao .c { border: 1px dashed #99C8D0; border-left: 4px solid #00768A; padding: 4mm 6mm; height: 54mm; box-sizing: border-box; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  #areaImpressao img { height: 7.5mm; width: auto; }
-  #areaImpressao .t { font-family: var(--titulo); font-weight: 700; color: #B2204A; font-size: 10.5pt; margin-top: 1.5mm; }
-  #areaImpressao .n { font-family: var(--titulo); font-weight: 700; font-size: 14pt; color: #0B3B47; line-height: 1.1; }
-  #areaImpressao .s { font-size: 9pt; color: #5B6A71; }
-  #areaImpressao .cod { font-family: var(--titulo); font-weight: 700; font-size: 21pt; letter-spacing: 4px; color: #00768A; margin: 0.5mm 0; line-height: 1.1; }
-  #areaImpressao .i { font-size: 8pt; color: #5B6A71; line-height: 1.3; }
-}
+.filtros { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.filtros .texto { max-width: 340px; }
+.filtros select { max-width: 180px; }
+.tabela .alerta { color: var(--verm); font-weight: 600; font-size: 13px; }
+.tabela .email { font-size: 14px; color: var(--pet); word-break: break-all; }

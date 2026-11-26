@@ -8,41 +8,21 @@
   });
   const ativos = () => SETORES.filter((s) => s.participa);
 
-  /* Candidatos da 1ª fase: quem não é chefe, nos sectores que participam. */
-  function mapaCandidatos() {
+  /* Pessoas que entram na votação: {id: {setor, chefe}}. Chefes votam mas não são votados. */
+  function mapaPessoas() {
     const m = {};
-    ativos().forEach((s) => {
-      const c = {};
-      s.pessoas.filter((p) => !p.chefe).forEach((p) => (c[p.id] = true));
-      m[s.id] = c;
-    });
+    ativos().forEach((s) => s.pessoas.forEach((p) => (m[p.id] = { setor: s.id, chefe: !!p.chefe })));
     return m;
   }
 
-  /* Códigos de 6 caracteres sem letras que se confundem (0/O, 1/I/L). */
-  const ALFABETO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  function rngSemente(s) { return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; }; }
-  function rngSeguro() { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 4294967296; }
-  function novoCodigo(rng) { let c = ""; for (let i = 0; i < 6; i++) c += ALFABETO[Math.floor(rng() * ALFABETO.length)]; return c; }
+  function semAcentos(s) { return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
 
-  /* Gera códigos só para quem ainda não tem. existentes = {codigo: {pid,...}} */
-  function gerarCodigos(existentes, rng) {
-    rng = rng || rngSeguro;
-    const usados = new Set(Object.keys(existentes || {}));
-    const comCodigo = new Set(Object.values(existentes || {}).map((v) => v.pid));
-    const novos = {};
-    ativos().forEach((s) =>
-      s.pessoas.forEach((p) => {
-        if (comCodigo.has(p.id)) return;
-        let c;
-        do { c = novoCodigo(rng); } while (usados.has(c));
-        usados.add(c);
-        novos[c] = { pid: p.id, setor: s.id, chefe: !!p.chefe };
-      })
-    );
-    return novos;
+  /* Verifica se alguma parte do e-mail lembra o nome da pessoa. Serve só para assinalar casos a rever. */
+  function emailCorresponde(email, nome) {
+    const ep = semAcentos(String(email).split("@")[0]).split(/[^a-z]+/).filter((t) => t.length >= 3);
+    const np = semAcentos(nome).split(/[^a-z]+/).filter((t) => t.length >= 3);
+    return ep.some((e) => np.some((n) => n.startsWith(e.slice(0, 4)) || e.startsWith(n.slice(0, 4))));
   }
-  function limparCodigo(t) { return String(t || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
 
   function contar(votos, setor) {
     const r = {};
@@ -50,7 +30,7 @@
     return r;
   }
 
-  /* Os N mais votados da 1ª fase; quem empata com o último lugar também passa. */
+  /* Os N mais votados da 1.ª fase; quem empata com o último lugar também passa. */
   function calcularFinalistas(votos1, setor, n) {
     const c = contar(votos1, setor);
     const ord = Object.entries(c).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
@@ -61,7 +41,7 @@
     return r;
   }
 
-  /* Ordem final: votos dos chefes, depois votos da 1ª fase como desempate. */
+  /* Ordem final: votos dos chefes, depois votos da 1.ª fase como desempate. */
   function resultado(setor, votos1, votos2, finalistas) {
     const v1 = contar(votos1, setor), v2 = contar(votos2, setor);
     const fin = Object.keys((finalistas || {})[setor] || {});
@@ -82,6 +62,7 @@
     grafico: '<path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-3"/>',
     relogio: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
     sair: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+    email: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/>',
     imprimir: '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
     folha: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/>',
   };
@@ -121,7 +102,7 @@
     return new Promise((ok) => {
       const d = document.createElement("div");
       d.className = "modal-fundo";
-      d.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><h3>' + titulo + "</h3><div>" + html + '</div><div class="modal-acoes"><button class="btn btn-sec" data-r="0">Voltar</button><button class="btn ' + (perigo ? "btn-perigo" : "btn-pri") + '" data-r="1">' + (rotulo || "Confirmar") + "</button></div></div>";
+      d.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><h3>' + titulo + "</h3><div>" + html + '</div><div class="modal-acoes"><button class="btn btn-sec" data-r="0">Cancelar</button><button class="btn ' + (perigo ? "btn-perigo" : "btn-pri") + '" data-r="1">' + (rotulo || "Confirmar") + "</button></div></div>";
       document.body.appendChild(d);
       d.querySelector('[data-r="1"]').focus();
       d.addEventListener("click", (e) => {
@@ -146,7 +127,7 @@
     const d = new Date(ts);
     return d.toLocaleDateString("pt-PT") + " às " + d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
   }
-  const NOME_FASE = { fechada: "Votação por abrir", fase1: "1ª fase aberta", fase2: "2ª fase aberta", encerrada: "Votação encerrada" };
+  const NOME_FASE = { fase1: "1.ª fase em curso", fase2: "2.ª fase em curso", encerrada: "Votação encerrada" };
 
-  window.VOT = { SETOR, PESSOA, ativos, mapaCandidatos, gerarCodigos, rngSemente, limparCodigo, contar, calcularFinalistas, resultado, icone, faixa, confirmar, aviso, esc, dataHora, NOME_FASE };
+  window.VOT = { SETOR, PESSOA, ativos, mapaPessoas, semAcentos, emailCorresponde, contar, calcularFinalistas, resultado, icone, faixa, confirmar, aviso, esc, dataHora, NOME_FASE };
 })();

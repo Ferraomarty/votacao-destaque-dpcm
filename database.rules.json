@@ -4,42 +4,96 @@
     ".write": false,
     "config": {
       ".read": true,
-      ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
-      "fase": { ".validate": "newData.isString() && newData.val().matches(/^(fechada|fase1|fase2|encerrada)$/)" },
-      "chefesFase1": { ".validate": "newData.isBoolean()" },
-      "$outro": { ".validate": false }
+      ".write": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'",
+      "fase": {
+        ".validate": "newData.isString() && newData.val().matches(/^(fase1|fase2|encerrada)$/)"
+      },
+      "$outro": {
+        ".validate": false
+      }
     },
-    "candidatos": { ".read": true, ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'" },
-    "finalistas": { ".read": true, ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'" },
-    "codigos": {
-      ".read": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
-      ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
-      "$cod": { ".read": true }
+    "pessoas": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'"
+    },
+    "finalistas": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'"
+    },
+    "ocupados": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'",
+      "$pid": {
+        ".write": "auth != null && auth.token.email_verified === true && auth.token.email.matches(/^[^@]+@ins[.]gov[.]mz$/) && !data.exists() && newData.val() === auth.uid && newData.parent().parent().child('registos/' + auth.uid + '/pid').val() === $pid"
+      }
+    },
+    "registos": {
+      ".read": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'",
+      ".write": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.token.email_verified === true && auth.token.email.matches(/^[^@]+@ins[.]gov[.]mz$/) && auth.uid === $uid && !data.exists() && newData.exists() && newData.parent().parent().child('ocupados/' + newData.child('pid').val()).val() === auth.uid",
+        ".validate": "newData.hasChildren(['pid', 'setor', 'chefe', 'email', 'ts']) && newData.child('pid').isString() && newData.child('pid').val().matches(/^[a-z0-9]+$/) && root.child('pessoas/' + newData.child('pid').val()).exists() && newData.child('setor').val() === root.child('pessoas/' + newData.child('pid').val() + '/setor').val() && newData.child('chefe').val() === root.child('pessoas/' + newData.child('pid').val() + '/chefe').val() && newData.child('email').val() === auth.token.email",
+        "pid": {
+          ".validate": "newData.isString()"
+        },
+        "setor": {
+          ".validate": "newData.isString()"
+        },
+        "chefe": {
+          ".validate": "newData.isBoolean()"
+        },
+        "email": {
+          ".validate": "newData.isString()"
+        },
+        "ts": {
+          ".validate": "newData.val() === now"
+        },
+        "$outro": {
+          ".validate": false
+        }
+      }
     },
     "votos1": {
-      ".read": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
-      ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
-      "$cod": {
-        ".read": true,
-        ".write": "!data.exists() && newData.exists() && root.child('config/fase').val() === 'fase1' && root.child('codigos/' + $cod).exists() && (root.child('codigos/' + $cod + '/chefe').val() === false || root.child('config/chefesFase1').val() === true)",
-        ".validate": "newData.hasChildren(['setor', 'candidato', 'ts']) && newData.child('setor').val() === root.child('codigos/' + $cod + '/setor').val() && newData.child('candidato').isString() && newData.child('candidato').val().matches(/^[a-z0-9]+$/) && newData.child('candidato').val() !== root.child('codigos/' + $cod + '/pid').val() && root.child('candidatos/' + newData.child('setor').val() + '/' + newData.child('candidato').val()).val() === true",
-        "setor": { ".validate": "newData.isString()" },
-        "candidato": { ".validate": "newData.isString()" },
-        "ts": { ".validate": "newData.val() === now" },
-        "$outro": { ".validate": false }
+      ".read": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'",
+      ".write": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.token.email_verified === true && auth.token.email.matches(/^[^@]+@ins[.]gov[.]mz$/) && auth.uid === $uid && !data.exists() && newData.exists() && root.child('config/fase').val() !== 'fase2' && root.child('config/fase').val() !== 'encerrada' && root.child('registos/' + $uid).exists()",
+        ".validate": "newData.hasChildren(['setor', 'candidato', 'ts']) && newData.child('setor').val() === root.child('registos/' + $uid + '/setor').val() && newData.child('candidato').isString() && newData.child('candidato').val().matches(/^[a-z0-9]+$/) && newData.child('candidato').val() !== root.child('registos/' + $uid + '/pid').val() && root.child('pessoas/' + newData.child('candidato').val() + '/setor').val() === newData.child('setor').val() && root.child('pessoas/' + newData.child('candidato').val() + '/chefe').val() === false",
+        "setor": {
+          ".validate": "newData.isString()"
+        },
+        "candidato": {
+          ".validate": "newData.isString()"
+        },
+        "ts": {
+          ".validate": "newData.val() === now"
+        },
+        "$outro": {
+          ".validate": false
+        }
       }
     },
     "votos2": {
-      ".read": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
-      ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_ADMIN'",
-      "$cod": {
-        ".read": true,
-        ".write": "!data.exists() && newData.exists() && root.child('config/fase').val() === 'fase2' && root.child('codigos/' + $cod + '/chefe').val() === true",
-        ".validate": "newData.hasChildren(['setor', 'candidato', 'ts']) && newData.child('setor').val() === root.child('codigos/' + $cod + '/setor').val() && newData.child('candidato').isString() && newData.child('candidato').val().matches(/^[a-z0-9]+$/) && newData.child('candidato').val() !== root.child('codigos/' + $cod + '/pid').val() && root.child('finalistas/' + newData.child('setor').val() + '/' + newData.child('candidato').val()).exists()",
-        "setor": { ".validate": "newData.isString()" },
-        "candidato": { ".validate": "newData.isString()" },
-        "ts": { ".validate": "newData.val() === now" },
-        "$outro": { ".validate": false }
+      ".read": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'",
+      ".write": "auth != null && auth.uid === 'wD1OSyTNWFVG30E8gjm0SBxN7fl2'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.token.email_verified === true && auth.token.email.matches(/^[^@]+@ins[.]gov[.]mz$/) && auth.uid === $uid && !data.exists() && newData.exists() && root.child('config/fase').val() === 'fase2' && root.child('registos/' + $uid).exists() && root.child('registos/' + $uid + '/chefe').val() === true",
+        ".validate": "newData.hasChildren(['setor', 'candidato', 'ts']) && newData.child('setor').val() === root.child('registos/' + $uid + '/setor').val() && newData.child('candidato').isString() && newData.child('candidato').val().matches(/^[a-z0-9]+$/) && newData.child('candidato').val() !== root.child('registos/' + $uid + '/pid').val() && root.child('finalistas/' + newData.child('setor').val() + '/' + newData.child('candidato').val()).exists()",
+        "setor": {
+          ".validate": "newData.isString()"
+        },
+        "candidato": {
+          ".validate": "newData.isString()"
+        },
+        "ts": {
+          ".validate": "newData.val() === now"
+        },
+        "$outro": {
+          ".validate": false
+        }
       }
     }
   }
