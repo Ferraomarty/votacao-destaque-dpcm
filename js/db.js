@@ -31,7 +31,6 @@
         utilizador: () => auth.currentUser,
         criarConta: async (email, senha) => {
           const c = await auth.createUserWithEmailAndPassword(email, senha);
-          try { await c.user.sendEmailVerification(ligacao()); } catch (e) { await c.user.sendEmailVerification(); }
           return c.user;
         },
         reenviar: async () => {

@@ -92,7 +92,7 @@
       '<div><div class="n">' + t.reg + '</div><div class="l">registados, de ' + t.total + " funcionários</div></div>" +
       '<div><div class="n">' + t.v1 + '</div><div class="l">votos na 1.ª fase (' + pct(t.v1, t.el1) + "% de " + t.el1 + ")</div></div>" +
       '<div><div class="n v">' + t.v2 + '</div><div class="l">votos de chefes, de ' + t.ch + "</div></div>" +
-      '<div><div class="n' + (rever ? " v" : "") + '">' + rever + '</div><div class="l">registos a rever</div></div>';
+      '<div><div class="n' + (rever ? " v" : "") + '">' + rever + '</div><div class="l">registos a rever (e-mail não corresponde ao nome)</div></div>';
   }
 
   $("#fases").addEventListener("click", async (e) => {
@@ -127,7 +127,7 @@
       .filter((r) => !q || semAcentos([r.setor, r.nome, r.email].join(" ")).includes(q))
       .map((r) => "<tr><td>" + esc(r.setor) + "</td><td>" + esc(r.nome) + (r.chefe ? ' <span class="etq v">chefe</span>' : "") + "</td><td>" +
         (r.uid ? '<span class="email">' + esc(r.email) + "</span>" + (r.rever ? '<div class="alerta">e-mail não corresponde ao nome</div>' : "") : '<span style="color:var(--cinza)">por registar</span>') +
-        '</td><td>' + (r.data ? esc(dataHora(r.data)) : "") + "</td><td>" + r.v1 + "</td><td>" + r.v2 + "</td><td>" +
+        '</td><td>' + (r.data ? esc(dataHora(r.data)) : "") + "</td><td>" + r.v1 + "</td><td>" + r.v2 + '</td><td class="grupo-btn">' +
         (r.uid ? '<button class="btn btn-sec btn-peq" data-anular="' + esc(r.uid) + '" data-pid="' + esc(r.pid) + '">Anular</button>' : "") + "</td></tr>").join("");
     $("#tabCodigos").innerHTML = "<tr><th>Sector</th><th>Nome</th><th>E-mail</th><th>Registo</th><th>1.ª fase</th><th>2.ª fase</th><th></th></tr>" + (linhas || '<tr><td colspan="7" class="vazio">Nada a mostrar.</td></tr>');
   }
@@ -147,7 +147,7 @@
     try { await navigator.clipboard.writeText(URL_VOTO); aviso("Endereço copiado."); } catch (e) { aviso(URL_VOTO); }
   };
   $("#btnExpReg").onclick = () => {
-    const d = [["Sector", "Nome", "Categoria", "Chefe", "E-mail", "Data do registo", "A rever", "Votou 1.ª fase", "Votou 2.ª fase"]]
+    const d = [["Sector", "Nome", "Categoria", "Chefe", "E-mail", "Data do registo", "E-mail não corresponde ao nome", "Votou 1.ª fase", "Votou 2.ª fase"]]
       .concat(linhasRegistos().map((r) => [r.setor, r.nome, r.categoria, r.chefe ? "Sim" : "Não", r.email, r.data ? dataHora(r.data) : "", r.rever ? "Sim" : "", r.v1, r.v2]));
     const ws = XLSX.utils.aoa_to_sheet(d);
     ws["!cols"] = [{ wch: 14 }, { wch: 42 }, { wch: 32 }, { wch: 7 }, { wch: 34 }, { wch: 20 }, { wch: 9 }, { wch: 13 }, { wch: 13 }];

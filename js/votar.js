@@ -15,13 +15,13 @@
   $("#malhaTopo").innerHTML = faixa(60, 28, 0);
   $("#malhaBase").innerHTML = faixa(80, 22, 5).replace('class="malha"', 'class="malha malha-base"');
   $("#passos").innerHTML =
-    "<li><b>Registo</b>Selecção do sector e do nome; confirmação do e-mail institucional.</li>" +
+    "<li><b>Registo</b>Selecção do sector e do nome e criação da conta com o e-mail institucional.</li>" +
     "<li><b>1.ª fase</b>Todos votam num colega do mesmo sector. Os chefes votam, mas não são votados.</li>" +
     "<li><b>2.ª fase</b>Os chefes escolhem o funcionário em destaque de entre os finalistas.</li>";
 
   if (DB.demo) {
     DB.semear();
-    $("#faixaDemo").innerHTML = '<div class="faixa-demo"><div><b>Modo de demonstração.</b> A base de dados ainda não está configurada. As contas e os votos ficam guardados apenas neste navegador e a confirmação do e-mail é dispensada.</div></div>';
+    $("#faixaDemo").innerHTML = '<div class="faixa-demo"><div><b>Modo de demonstração.</b> A base de dados ainda não está configurada. As contas e os votos ficam guardados apenas neste navegador. </div></div>';
   }
 
   DB.on("config", (c) => {
@@ -36,10 +36,9 @@
   DB.on("ocupados", (o) => { ocupados = o || {}; if (!utilizador && modo === "criar") actualizarNomes("regSetor", "regNome"); }, () => {});
 
   DB.auth.aoMudar(async (u) => {
-    if (u && !u.emailVerified) { try { u = (await DB.auth.actualizar()) || u; } catch (e) {} }
     utilizador = u;
     registo = null;
-    if (u && u.emailVerified) { try { registo = await DB.get("registos/" + u.uid); } catch (e) { registo = null; } }
+    if (u) { try { registo = await DB.get("registos/" + u.uid); } catch (e) { registo = null; } }
     desenhar();
   });
 
@@ -74,19 +73,6 @@
 
   function desenharConta() {
     const box = $("#cartaoConta");
-    if (utilizador && !utilizador.emailVerified) {
-      box.innerHTML = '<h2>Confirmação do e-mail</h2><p class="ajuda">Foi enviada uma mensagem para <b>' + esc(utilizador.email) + "</b>. Abra-a e clique na ligação de confirmação; em seguida, regresse a esta página. Caso não encontre a mensagem, verifique a pasta de correio não solicitado (spam).</p>" +
-        '<button class="btn btn-pri btn-larg" id="btnJa">Verificar confirmação</button><div class="erro" id="erroConta"></div>' +
-        '<p style="display:flex;justify-content:space-between;margin:6px 0 0"><button class="link" id="btnReenviar">Reenviar a mensagem</button><button class="link" id="btnSair1">Terminar sessão</button></p>';
-      $("#btnJa").onclick = async () => {
-        const u = await DB.auth.actualizar();
-        if (u && u.emailVerified) { utilizador = u; registo = await DB.get("registos/" + u.uid).catch(() => null); desenhar(); }
-        else $("#erroConta").textContent = "O e-mail ainda não foi confirmado. Clique na ligação enviada para a sua caixa de correio.";
-      };
-      $("#btnReenviar").onclick = async () => { try { await DB.auth.reenviar(); aviso("A mensagem foi reenviada."); } catch (e) { $("#erroConta").textContent = msgErro(e); } };
-      $("#btnSair1").onclick = () => DB.auth.sair();
-      return;
-    }
     const abas = '<div class="abas-conta"><button data-m="entrar" class="' + (modo === "entrar" ? "ativa" : "") + '">Iniciar sessão</button><button data-m="criar" class="' + (modo === "criar" ? "ativa" : "") + '">Registo</button></div>';
     const campoEmail = '<label class="campo" for="email">E-mail institucional</label><input class="texto" id="email" type="email" autocomplete="username" placeholder="nome.apelido@ins.gov.mz">';
     let corpo;
@@ -130,6 +116,7 @@
           if (senha !== $("#senha2").value) { err.textContent = "As palavras-passe indicadas não coincidem."; return; }
           try { localStorage.setItem(PENDENTE, JSON.stringify({ email, pid: $("#regNome").value })); } catch (e) {}
           await DB.auth.criarConta(email, senha);
+          aviso("Conta criada.");
         } else {
           await DB.auth.entrar(email, senha);
         }
@@ -141,7 +128,7 @@
   /* ---------- Ecrãs ---------- */
   function desenhar() {
     if (!config) return;
-    if (!utilizador || !utilizador.emailVerified) {
+    if (!utilizador) {
       $("#ecraBoletim").hidden = true;
       $("#ecraEntrada").hidden = false;
       desenharConta();
@@ -172,7 +159,7 @@
     let pend = null;
     try { pend = JSON.parse(localStorage.getItem(PENDENTE) || "null"); } catch (e) {}
     const p = pend && pend.email === utilizador.email && PESSOA[pend.pid] && !ocupados[pend.pid] ? PESSOA[pend.pid] : null;
-    const topo = '<div class="eleitor"><div class="quem">' + icone("email", "p") + '<div><div class="nome" style="font-size:22px">' + esc(utilizador.email) + '</div><div class="setor">E-mail confirmado</div></div></div><button class="link" id="btnSair">Terminar sessão</button></div>' +
+    const topo = '<div class="eleitor"><div class="quem">' + icone("email", "p") + '<div><div class="nome" style="font-size:22px">' + esc(utilizador.email) + '</div><div class="setor">' + "Conta criada" + '</div></div></div><button class="link" id="btnSair">Terminar sessão</button></div>' +
       '<h2 class="pergunta">Conclusão do registo</h2>';
     if (p) {
       mostrar(topo + '<p class="sub">Verifique os dados abaixo. Após a conclusão do registo, o nome e o sector não podem ser alterados.</p>' + ficha(p, "Titular da conta") +
@@ -198,7 +185,7 @@
 
   async function gravarRegisto(p) {
     $("#btnConcluir").disabled = true;
-    const r = { pid: p.id, setor: p.setor, chefe: !!p.chefe, email: utilizador.email, ts: DB.agora() };
+    const r = { pid: p.id, setor: p.setor, chefe: !!p.chefe, email: utilizador.email, verificado: !!utilizador.emailVerified, ts: DB.agora() };
     try {
       await DB.update("", { ["registos/" + utilizador.uid]: r, ["ocupados/" + p.id]: utilizador.uid });
       try { localStorage.removeItem(PENDENTE); } catch (e) {}
