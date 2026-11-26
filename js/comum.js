@@ -127,7 +127,7 @@
     const d = new Date(ts);
     return d.toLocaleDateString("pt-PT") + " às " + d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
   }
-  const NOME_FASE = { fase1: "1.ª fase em curso", fase2: "2.ª fase em curso", encerrada: "Votação encerrada" };
+  const NOME_FASE = { fase1: "Votação aberta", fase2: "Votação aberta", encerrada: "Votação encerrada" };
 
   window.VOT = { SETOR, PESSOA, ativos, mapaPessoas, semAcentos, emailCorresponde, contar, calcularFinalistas, resultado, icone, faixa, confirmar, aviso, esc, dataHora, NOME_FASE };
 })();

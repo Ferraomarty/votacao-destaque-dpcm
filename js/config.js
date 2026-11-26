@@ -12,8 +12,8 @@ window.FIREBASE_CONFIG = {
   appId: "1:224069840706:web:0ee24b957d0ce281b922db"
 };
 
-/* Quantos finalistas por sector passam da 1ª para a 2ª fase (empates no último lugar também passam). */
+/* Quantos nomes aparecem destacados na contagem de cada sector (empates no último lugar também contam). */
 window.N_FINALISTAS = 3;
 
 /* Título que aparece nas páginas. */
-window.TITULO_VOTACAO = "Funcionário em destaque 2026";
+window.TITULO_VOTACAO = "Reconhecimento entre colegas 2026";

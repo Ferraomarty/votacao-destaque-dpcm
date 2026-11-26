@@ -1,4 +1,4 @@
-# Votação do funcionário em destaque 2026 · DPCM
+# Reconhecimento entre colegas 2026 · DPCM
 
 Plataforma de votação interna da Delegação Provincial da Cidade de Maputo do Instituto Nacional de Saúde.
 

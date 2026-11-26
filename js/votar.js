@@ -15,9 +15,9 @@
   $("#malhaTopo").innerHTML = faixa(60, 28, 0);
   $("#malhaBase").innerHTML = faixa(80, 22, 5).replace('class="malha"', 'class="malha malha-base"');
   $("#passos").innerHTML =
-    "<li><b>Registo</b>Selecção do sector e do nome e criação da conta com o e-mail institucional.</li>" +
-    "<li><b>1.ª fase</b>Todos votam num colega do mesmo sector. Os chefes votam, mas não são votados.</li>" +
-    "<li><b>2.ª fase</b>Os chefes escolhem o funcionário em destaque de entre os finalistas.</li>";
+    "<li><b>Registo</b>Seleccione o departamento ou unidade e o seu nome, e crie a conta com o e-mail institucional.</li>" +
+    "<li><b>Votação</b>Escolha um colega do mesmo departamento ou unidade. Os chefes também votam, mas não podem ser votados.</li>" +
+    "<li><b>Anonimato</b>Os resultados são apresentados apenas em totais. Cada pessoa vota uma única vez.</li>";
 
   if (DB.demo) {
     DB.semear();
@@ -26,7 +26,7 @@
 
   DB.on("config", (c) => {
     config = c || {};
-    const f = config.fase === "fase2" || config.fase === "encerrada" ? config.fase : "fase1";
+    const f = config.fase === "encerrada" ? "encerrada" : "fase1";
     const e = $("#estado");
     e.textContent = NOME_FASE[f];
     e.className = "estado " + f;
@@ -44,14 +44,14 @@
 
   /* ---------- Listas de sector e de nome ---------- */
   function opcoesSetor() {
-    return '<option value="">Seleccione o sector</option>' + VOT.ativos().map((s) => '<option value="' + s.id + '">' + esc(s.nome) + "</option>").join("");
+    return '<option value="">Seleccione o departamento ou unidade</option>' + VOT.ativos().map((s) => '<option value="' + s.id + '">' + esc(s.nome) + "</option>").join("");
   }
   function actualizarNomes(idSetor, idNome) {
     const sel = document.getElementById(idSetor), nome = document.getElementById(idNome);
     if (!sel || !nome) return;
     const atual = nome.value;
     const s = SETOR[sel.value];
-    if (!s) { nome.innerHTML = '<option value="">Seleccione primeiro o sector</option>'; nome.disabled = true; return; }
+    if (!s) { nome.innerHTML = '<option value="">Seleccione primeiro o departamento ou unidade</option>'; nome.disabled = true; return; }
     nome.disabled = false;
     nome.innerHTML = '<option value="">Seleccione o seu nome</option>' + s.pessoas.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt")).map((p) => {
       const oc = !!ocupados[p.id];
@@ -80,10 +80,10 @@
       corpo = '<h2>Recuperação da palavra-passe</h2><p class="ajuda">Indique o seu e-mail institucional. Receberá uma ligação para definir uma nova palavra-passe.</p>' +
         '<form id="formConta">' + campoEmail + '<div class="erro" id="erroConta"></div><button class="btn btn-pri btn-larg" type="submit">Enviar ligação</button></form><p><button class="link" data-m="entrar">Voltar a «Iniciar sessão»</button></p>';
     } else if (modo === "criar") {
-      corpo = abas + '<p class="ajuda">Seleccione o seu sector e o seu nome. Estes dados ficam associados à conta e não podem ser alterados depois do registo.</p>' +
+      corpo = abas + '<p class="ajuda">Seleccione o seu departamento ou unidade e o seu nome. Estes dados ficam associados à conta e não podem ser alterados depois do registo.</p>' +
         '<form id="formConta" autocomplete="on">' +
-        '<label class="campo" for="regSetor">Sector</label><select class="texto" id="regSetor">' + opcoesSetor() + "</select>" +
-        '<label class="campo" for="regNome" style="margin-top:12px">Nome</label><select class="texto" id="regNome" disabled><option value="">Seleccione primeiro o sector</option></select>' +
+        '<label class="campo" for="regSetor">Departamento ou unidade</label><select class="texto" id="regSetor">' + opcoesSetor() + "</select>" +
+        '<label class="campo" for="regNome" style="margin-top:12px">Nome</label><select class="texto" id="regNome" disabled><option value="">Seleccione primeiro o departamento ou unidade</option></select>' +
         '<div style="height:12px"></div>' + campoEmail +
         '<label class="campo" for="senha" style="margin-top:12px">Palavra-passe</label><input class="texto" id="senha" type="password" autocomplete="new-password">' +
         '<label class="campo" for="senha2" style="margin-top:12px">Confirmação da palavra-passe</label><input class="texto" id="senha2" type="password" autocomplete="new-password">' +
@@ -95,7 +95,7 @@
         '<div class="erro" id="erroConta" role="alert"></div><button class="btn btn-pri btn-larg" type="submit">Iniciar sessão</button></form>' +
         '<p style="margin:10px 0 0"><button class="link" data-m="recuperar">Esqueceu-se da palavra-passe?</button></p>';
     }
-    box.innerHTML = corpo + '<div class="nota">Apenas são aceites e-mails @ins.gov.mz. Cada nome fica associado a uma única conta e cada conta vota uma única vez em cada fase.</div>';
+    box.innerHTML = corpo + '<div class="nota">Apenas são aceites e-mails @ins.gov.mz. Cada nome fica associado a uma única conta e cada conta vota uma única vez.</div>';
     box.querySelectorAll("[data-m]").forEach((b) => (b.onclick = () => { modo = b.dataset.m; desenharConta(); }));
     if (modo === "criar") $("#regSetor").onchange = () => actualizarNomes("regSetor", "regNome");
 
@@ -104,7 +104,7 @@
       const email = $("#email").value.trim().toLowerCase();
       const err = $("#erroConta");
       err.textContent = "";
-      if (modo === "criar" && !$("#regNome").value) { err.textContent = "Seleccione o sector e o seu nome."; return; }
+      if (modo === "criar" && !$("#regNome").value) { err.textContent = "Seleccione o departamento ou unidade e o seu nome."; return; }
       if (!DB.DOMINIO.test(email)) { err.textContent = "Indique o seu e-mail institucional (terminado em @ins.gov.mz)."; return; }
       const btn = ev.target.querySelector("button[type=submit]");
       btn.disabled = true;
@@ -150,7 +150,7 @@
     return '<div class="mensagem ' + (cls || "") + '">' + ic + "<div><h3>" + titulo + "</h3>" + corpo + "</div></div>";
   }
   function ficha(p, rotulo) {
-    return '<div class="ficha"><div class="r">' + rotulo + '</div><div class="nm">' + esc(p.nome) + '</div><dl><dt>Categoria</dt><dd>' + esc(p.categoria || "—") + "</dd><dt>Sector</dt><dd>" + esc(SETOR[p.setor].nome) + "</dd></dl></div>";
+    return '<div class="ficha"><div class="r">' + rotulo + '</div><div class="nm">' + esc(p.nome) + '</div><dl><dt>Categoria</dt><dd>' + esc(p.categoria || "—") + "</dd><dt>Departamento/unidade</dt><dd>" + esc(SETOR[p.setor].nome) + "</dd></dl></div>";
   }
 
   /* Conclusão do registo: os dados escolhidos no formulário aparecem bloqueados. */
@@ -162,16 +162,16 @@
     const topo = '<div class="eleitor"><div class="quem">' + icone("email", "p") + '<div><div class="nome" style="font-size:22px">' + esc(utilizador.email) + '</div><div class="setor">' + "Conta criada" + '</div></div></div><button class="link" id="btnSair">Terminar sessão</button></div>' +
       '<h2 class="pergunta">Conclusão do registo</h2>';
     if (p) {
-      mostrar(topo + '<p class="sub">Verifique os dados abaixo. Após a conclusão do registo, o nome e o sector não podem ser alterados.</p>' + ficha(p, "Titular da conta") +
+      mostrar(topo + '<p class="sub">Verifique os dados abaixo. Após a conclusão do registo, estes dados não podem ser alterados.</p>' + ficha(p, "Titular da conta") +
         '<div class="acoes"><button class="btn btn-azul" id="btnConcluir">Concluir registo</button></div>' +
         '<p class="nota">Se os dados não estiverem correctos, termine a sessão e contacte a organização antes de prosseguir.</p>');
       $("#btnConcluir").onclick = () => gravarRegisto(p);
       return;
     }
     /* Sem escolha guardada (por exemplo, noutro aparelho): selecção feita agora, uma única vez. */
-    mostrar(topo + '<p class="sub">Seleccione o seu sector e o seu nome. Após a conclusão do registo, estes dados não podem ser alterados.</p>' +
-      '<div class="cx-sel"><label class="campo" for="idSetor">Sector</label><select class="texto" id="idSetor">' + opcoesSetor() + "</select>" +
-      '<label class="campo" for="idNome" style="margin-top:12px">Nome</label><select class="texto" id="idNome" disabled><option value="">Seleccione primeiro o sector</option></select></div>' +
+    mostrar(topo + '<p class="sub">Seleccione o seu departamento ou unidade e o seu nome. Após a conclusão do registo, estes dados não podem ser alterados.</p>' +
+      '<div class="cx-sel"><label class="campo" for="idSetor">Departamento ou unidade</label><select class="texto" id="idSetor">' + opcoesSetor() + "</select>" +
+      '<label class="campo" for="idNome" style="margin-top:12px">Nome</label><select class="texto" id="idNome" disabled><option value="">Seleccione primeiro o departamento ou unidade</option></select></div>' +
       '<div id="pre"></div><div class="acoes"><button class="btn btn-azul" id="btnConcluir" disabled>Concluir registo</button></div>' +
       '<p class="nota">Caso o seu nome conste como já registado, contacte a organização antes de prosseguir.</p>');
     $("#idSetor").onchange = () => { actualizarNomes("idSetor", "idNome"); $("#pre").innerHTML = ""; $("#btnConcluir").disabled = true; };
@@ -202,27 +202,20 @@
   function cabecalho() {
     const p = PESSOA[registo.pid], s = SETOR[registo.setor];
     return '<div class="eleitor"><div class="quem">' + icone(registo.chefe ? "premio" : "pessoas", registo.chefe ? "v" : "") +
-      '<div><div class="nome">' + esc(p ? p.nome : registo.pid) + '</div><div class="setor">' + esc(s ? s.nome : "") + (registo.chefe ? " · Chefe de sector" : "") + "</div></div></div>" +
+      '<div><div class="nome">' + esc(p ? p.nome : registo.pid) + '</div><div class="setor">' + esc(s ? s.nome : "") + (registo.chefe ? " · Chefia" : "") + "</div></div></div>" +
       '<button class="link" id="btnSair">Terminar sessão</button></div>';
   }
 
   async function desenharBoletim() {
-    /* A votação está sempre aberta: sem indicação em contrário, decorre a 1.ª fase. */
-    const fase = config.fase === "fase2" || config.fase === "encerrada" ? config.fase : "fase1";
+    /* A votação está sempre aberta, salvo se a organização a encerrar no painel. */
+    const fase = config.fase === "encerrada" ? "encerrada" : "fase1";
     let corpo = "";
     if (!PESSOA[registo.pid] || !SETOR[registo.setor] || !SETOR[registo.setor].participa) {
-      corpo = mensagem(icone("cadeado", "p"), "Sector não abrangido", "<p>O seu sector não participa nesta votação.</p>");
+      corpo = mensagem(icone("cadeado", "p"), "Departamento não abrangido", "<p>O seu departamento ou unidade não participa nesta votação.</p>");
     } else if (fase === "encerrada") {
-      corpo = mensagem(icone("cadeado", "p"), "Votação encerrada", "<p>Agradecemos a sua participação. Os resultados serão divulgados pela Delegação.</p>");
+      corpo = mensagem(icone("cadeado", "p"), "Votação encerrada", "<p>Agradecemos a sua participação.</p>");
     } else if (fase === "fase1") {
       corpo = await votoOuLista(1);
-    } else if (fase === "fase2") {
-      if (!registo.chefe) {
-        const v = await DB.get("votos1/" + utilizador.uid).catch(() => null);
-        corpo = mensagem(icone("certo"), "2.ª fase reservada aos chefes de sector", "<p>" + (v ? "O seu voto na 1.ª fase encontra-se registado. " : "") + "Nesta fase, os chefes de sector escolhem o funcionário em destaque de entre os finalistas.</p>");
-      } else if (!Object.keys(finalistas[registo.setor] || {}).length) {
-        corpo = mensagem(icone("relogio"), "Finalistas por publicar", "<p>Os finalistas do seu sector ainda não foram publicados. Volte a consultar esta página mais tarde.</p>");
-      } else corpo = await votoOuLista(2);
     }
     mostrar(cabecalho() + corpo);
     ligarVoto();
@@ -232,19 +225,19 @@
     const v = await DB.get("votos" + n + "/" + utilizador.uid).catch(() => null);
     if (v) {
       const p = PESSOA[v.candidato];
-      return mensagem(icone("certo"), "Voto registado", "<p>O seu voto na " + n + ".ª fase foi atribuído a:</p><div class=\"escolhido\">" + esc(p ? p.nome : v.candidato) + '</div><p style="color:var(--cinza)">Registado em ' + dataHora(v.ts) + ". O voto não pode ser alterado.</p>", "ok");
+      return mensagem(icone("certo"), "Voto registado", "<p>O seu voto foi atribuído a:</p><div class=\"escolhido\">" + esc(p ? p.nome : v.candidato) + '</div><p style="color:var(--cinza)">Registado em ' + dataHora(v.ts) + ". O voto não pode ser alterado.</p>", "ok");
     }
     /* O próprio votante nunca consta da lista (também é recusado pelas regras da base de dados). */
     let ids;
     if (n === 1) ids = SETOR[registo.setor].pessoas.filter((p) => !p.chefe && p.id !== registo.pid).map((p) => p.id);
     else ids = Object.keys(finalistas[registo.setor] || {}).filter((id) => id !== registo.pid);
     ids.sort((a, b) => PESSOA[a].nome.localeCompare(PESSOA[b].nome, "pt"));
-    const titulo = n === 1 ? "Votação no sector" : "Escolha do funcionário em destaque";
+    const titulo = "Escolha o colega";
     const sub = n === 1
-      ? "Seleccione o colega do " + esc(SETOR[registo.setor].curto) + " que, no seu entender, mais se destacou. Os chefes de sector não são elegíveis."
-      : "Seleccione, de entre os finalistas do " + esc(SETOR[registo.setor].curto) + ", o funcionário em destaque.";
+      ? "Seleccione o colega do " + esc(SETOR[registo.setor].curto) + " que, em 2026, fez a diferença para si. Os chefes não podem ser votados."
+      : "";
     return '<h2 class="pergunta">' + titulo + '</h2><p class="sub">' + sub + "</p>" +
-      '<div class="cx-sel"><label class="campo" for="selCand">Funcionário</label><select class="texto" id="selCand" data-fase="' + n + '"><option value="">Seleccione um nome</option>' +
+      '<div class="cx-sel"><label class="campo" for="selCand">Colega</label><select class="texto" id="selCand" data-fase="' + n + '"><option value="">Seleccione um nome</option>' +
       ids.map((id) => '<option value="' + id + '">' + esc(PESSOA[id].nome) + "</option>").join("") + "</select></div>" +
       '<div id="pre"></div><div class="acoes"><button class="btn btn-pri" id="btnContinuar" disabled>Continuar</button></div>';
   }
@@ -263,8 +256,8 @@
 
   /* Ecrã próprio de confirmação: o votante vê claramente a quem atribui o voto. */
   function confirmarVoto(p, n) {
-    mostrar(cabecalho() + '<h2 class="pergunta">Confirmação do voto</h2><p class="sub">Confirme que pretende atribuir o seu voto da ' + n + ".ª fase a:</p>" + ficha(p, "Voto a atribuir") +
-      '<div class="aviso-final">Após a confirmação, o voto fica registado e não pode ser alterado.</div>' +
+    mostrar(cabecalho() + '<h2 class="pergunta">Confirmação do voto</h2><p class="sub">Confirme que pretende votar em:</p>' + ficha(p, "Voto a atribuir") +
+      '<div class="aviso-final">O voto é anónimo e, depois de confirmado, não pode ser alterado.</div>' +
       '<div class="acoes"><button class="btn btn-sec" id="btnCorrigir">Corrigir a escolha</button><button class="btn btn-pri" id="btnConfirmar">Confirmar voto</button></div>');
     $("#btnCorrigir").onclick = () => desenharBoletim();
     $("#btnConfirmar").onclick = async () => {
@@ -275,7 +268,7 @@
         aviso("Voto registado com sucesso.");
       } catch (e) {
         const ja = await DB.get("votos" + n + "/" + utilizador.uid).catch(() => null);
-        if (!ja) aviso("Não foi possível registar o voto. A fase poderá ter sido encerrada; actualize a página.", "erro-t");
+        if (!ja) aviso("Não foi possível registar o voto. A votação poderá ter sido encerrada; actualize a página.", "erro-t");
       }
       desenharBoletim();
     };
