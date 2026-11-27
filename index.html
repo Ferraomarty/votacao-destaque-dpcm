@@ -403,15 +403,15 @@ main.painel { max-width: 1160px; margin: 0 auto; padding: 34px 28px 50px; }
       <div class="bloco">
         <h2>Endereço da votação</h2>
         <ol class="etapas">
-          <li><div><b>Divulgar o endereço</b><span>Envie este endereço aos funcionários. Cada um selecciona o departamento ou unidade, o nome e o e-mail @ins.gov.mz, e vota.</span><span class="st" id="stUrl"></span></div><button class="btn btn-sec btn-peq" id="btnCopiar">Copiar endereço</button></li>
+          <li><div><b>Divulgar o endereço</b><span>Envie este endereço aos funcionários. Cada um selecciona o departamento ou unidade e o nome, e vota.</span><span class="st" id="stUrl"></span></div><button class="btn btn-sec btn-peq" id="btnCopiar">Copiar endereço</button></li>
         </ol>
       </div>
       <div class="bloco">
         <div class="cab-bloco"><h2>Votantes</h2><button class="btn btn-sec btn-peq" id="btnExpReg">Exportar (Excel)</button></div>
-        <p class="ajuda">Mostra quem já votou e com que e-mail, mas nunca em quem. Os votos com um e-mail que não corresponde ao nome são assinalados; se não forem da pessoa indicada, anule-os.</p>
+        <p class="ajuda">Mostra quem já votou, mas nunca em quem. Se um colega disser que não foi ele a votar, anule o voto feito em seu nome para que possa votar de novo.</p>
         <div class="filtros">
-          <input class="texto" id="buscaCod" placeholder="Procurar nome, sector ou e-mail">
-          <select class="texto" id="filtroReg"><option value="todos">Todos</option><option value="sim">Já votaram</option><option value="nao">Ainda não votaram</option><option value="rever">A rever</option></select>
+          <input class="texto" id="buscaCod" placeholder="Procurar nome ou sector">
+          <select class="texto" id="filtroReg"><option value="todos">Todos</option><option value="sim">Já votaram</option><option value="nao">Ainda não votaram</option></select>
         </div>
         <div class="rolar"><table class="tabela" id="tabCodigos"></table></div>
       </div>
@@ -736,7 +736,7 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
       if (!r.chefe || ler("finalistas/" + v.setor + "/" + v.candidato) === null) throw erro("PERMISSION_DENIED");
     }
   }
-  /* Voto sem conta: votos/<pid>, votaram/<pid> e emails/<chave> têm de ser gravados juntos. */
+  /* Voto sem conta: votos/<pid> e votaram/<pid> têm de ser gravados juntos. */
   function validarVotoSemConta(obj) {
     const k = Object.keys(obj).find((x) => /^votos\/[a-z0-9]+$/.test(x));
     if (!k || obj[k] === null) return;
@@ -744,12 +744,11 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
     const nega = () => { throw erro("PERMISSION_DENIED"); };
     if (ler(k) || conf.fase === "encerrada") nega();
     const p = ler("pessoas/" + pid);
-    if (!p || !v || v.setor !== p.setor || typeof v.email !== "string" || !/^[a-z0-9._%+-]+@ins\.gov\.mz$/.test(v.email.toLowerCase())) nega();
+    if (!p || !v || v.setor !== p.setor) nega();
     if (typeof v.candidato !== "string" || v.candidato === pid) nega();
     const c = ler("pessoas/" + v.candidato);
     if (!c || c.setor !== v.setor || c.chefe) nega();
-    const ch = v.email.toLowerCase().replace(/\./g, ",");
-    if (obj["votaram/" + pid] !== true || ler("emails/" + ch) || obj["emails/" + ch] !== pid) nega();
+    if (obj["votaram/" + pid] !== true) nega();
   }
 
   window.DB = {
@@ -798,15 +797,13 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
 })();
 
 (function () {
-  /* Votação sem conta: o votante identifica-se com departamento/unidade, nome e e-mail institucional.
-     Cada nome e cada e-mail só podem votar uma vez (garantido pelas regras da base de dados). */
+  /* Votação sem conta: o votante identifica-se com o departamento/unidade e o nome.
+     Cada nome só pode votar uma vez (garantido pelas regras da base de dados). */
   const $ = (s) => document.querySelector(s);
   const { SETOR, PESSOA, icone, faixa, esc, aviso, dataHora, NOME_FASE } = VOT;
-  const EMAIL_OK = /^[a-z0-9._%+-]+@ins\.gov\.mz$/;
-  const chaveEmail = (e) => e.toLowerCase().replace(/\./g, ",");
   let config = null;
   let votaram = {};   // {pid: true} — só indica quem já votou, nunca em quem
-  let votante = null; // {pid, setor, email}
+  let votante = null; // {pid, setor}
   /* Bloqueio no aparelho: depois de votar, este navegador não deixa votar outra vez. */
   const CHAVE_APARELHO = "dpcm-reconhecimento-2026-votou";
   function jaVotouAqui() { try { return JSON.parse(localStorage.getItem(CHAVE_APARELHO) || "null"); } catch (e) { return null; } }
@@ -823,7 +820,7 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
   $("#malhaTopo").innerHTML = faixa(60, 28, 0);
   $("#malhaBase").innerHTML = faixa(80, 22, 5).replace('class="malha"', 'class="malha malha-base"');
   $("#passos").innerHTML =
-    "<li><b>Identificação</b>Seleccione o departamento ou unidade e o seu nome, e indique o e-mail institucional.</li>" +
+    "<li><b>Identificação</b>Seleccione o seu departamento ou unidade e o seu nome.</li>" +
     "<li><b>Voto</b>Escolha um colega do mesmo departamento ou unidade. Os chefes também votam, mas não podem ser votados.</li>" +
     "<li><b>Anonimato</b>Os resultados são apresentados apenas em totais. Cada pessoa vota uma única vez.</li>";
 
@@ -939,25 +936,22 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
         ". Cada pessoa vota uma única vez.</p><p class=\"ajuda\">Se outra pessoa precisa de votar, deve fazê-lo no seu próprio telemóvel ou computador.</p>";
       return;
     }
-    box.innerHTML = '<h2>Identificação</h2><p class="ajuda">Seleccione o seu departamento ou unidade e o seu nome, e indique o seu e-mail institucional.</p>' +
+    box.innerHTML = '<h2>Identificação</h2><p class="ajuda">Seleccione o seu departamento ou unidade e o seu nome.</p>' +
       '<form id="formId" autocomplete="on">' +
       '<label class="campo" for="idSetor">Departamento ou unidade</label><select class="texto" id="idSetor">' + opcoesSetor() + "</select>" +
       '<label class="campo" for="idNome" style="margin-top:12px">Nome</label><select class="texto" id="idNome" disabled><option value="">Seleccione primeiro o departamento ou unidade</option></select>' +
-      '<label class="campo" for="idEmail" style="margin-top:12px">E-mail institucional</label><input class="texto" id="idEmail" type="email" autocomplete="email" placeholder="nome.apelido@ins.gov.mz">' +
-      '<div class="erro" id="erroId" role="alert"></div><button class="btn btn-pri btn-larg" type="submit">Continuar para a votação</button></form>' +
-      '<div class="nota">Apenas são aceites e-mails @ins.gov.mz. Cada nome e cada e-mail só podem votar uma vez.</div>';
+            '<div class="erro" id="erroId" role="alert"></div><button class="btn btn-pri btn-larg" type="submit">Continuar para a votação</button></form>' +
+      '<div class="nota">Cada nome só pode votar uma vez.</div>';
     $("#idSetor").onchange = actualizarNomes;
     $("#formId").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const err = $("#erroId");
       err.textContent = "";
       const pid = $("#idNome").value;
-      const email = $("#idEmail").value.trim().toLowerCase();
       if (!pid) { err.textContent = "Seleccione o departamento ou unidade e o seu nome."; return; }
-      if (!EMAIL_OK.test(email)) { err.textContent = "Indique o seu e-mail institucional (terminado em @ins.gov.mz)."; return; }
       if (votaram[pid]) { err.textContent = "Este nome já votou. Se não foi o senhor/a senhora, contacte a organização."; return; }
       if (jaVotouAqui() || cookieVotou()) { desenharIdentificacao(); return; }
-      votante = { pid, setor: PESSOA[pid].setor, email };
+      votante = { pid, setor: PESSOA[pid].setor };
       desenharVoto();
     });
   }
@@ -976,7 +970,7 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
   function cabecalho() {
     const p = PESSOA[votante.pid];
     return '<div class="eleitor"><div class="quem">' + icone(p.chefe ? "premio" : "pessoas", p.chefe ? "v" : "") +
-      '<div><div class="nome">' + esc(p.nome) + '</div><div class="setor">' + esc(SETOR[votante.setor].nome) + " · " + esc(votante.email) + "</div></div></div>" +
+      '<div><div class="nome">' + esc(p.nome) + '</div><div class="setor">' + esc(SETOR[votante.setor].nome) + "</div></div></div>" +
       '<button class="link" id="btnSair">Não sou eu</button></div>';
   }
   function ficha(p, rotulo) {
@@ -1008,9 +1002,9 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
       $("#btnConfirmar").disabled = true; $("#btnCorrigir").disabled = true;
       if (p.id === votante.pid) { aviso("Não é permitido votar em si próprio.", "erro-t"); return desenharVoto(); }
       const jaAntes = !!votaram[votante.pid];
-      const v = { setor: votante.setor, candidato: p.id, email: votante.email, ts: DB.agora() };
+      const v = { setor: votante.setor, candidato: p.id, ts: DB.agora() };
       try {
-        await DB.update("", { ["votos/" + votante.pid]: v, ["votaram/" + votante.pid]: true, ["emails/" + chaveEmail(votante.email)]: votante.pid });
+        await DB.update("", { ["votos/" + votante.pid]: v, ["votaram/" + votante.pid]: true });
         marcarAparelho(PESSOA[votante.pid].nome);
         mostrar(cabecalho().replace('<button class="link" id="btnSair">Não sou eu</button>', "") +
           '<div class="mensagem ok">' + icone("certo") + '<div><h3>Voto registado</h3><p>O seu voto foi atribuído a:</p><div class="escolhido">' + esc(p.nome) + '</div><p style="color:var(--cinza)">Registado em ' + dataHora(Date.now()) + ". Agradecemos a sua participação.</p></div></div>" +
@@ -1018,7 +1012,7 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
       } catch (e) {
         mostrarFalha("gravação do voto", e);
         const ja = jaAntes;
-        const motivo = ja ? "Este nome já tinha votado." : /permission/i.test((e && e.code) || "") ? "O voto foi recusado. Este e-mail pode já ter sido usado, a votação pode estar encerrada, ou as regras do Firestore não estão publicadas." : explicarErro(e);
+        const motivo = ja ? "Este nome já tinha votado." : /permission/i.test((e && e.code) || "") ? "O voto foi recusado. Este nome pode já ter votado, a votação pode estar encerrada, ou as regras do Firestore não estão publicadas." : explicarErro(e);
         mostrar(cabecalho() + '<div class="mensagem v">' + icone("cadeado", "v") + '<div><h3>Não foi possível registar o voto</h3><p>' + esc(motivo) + '</p><p style="color:var(--cinza);font-size:13px">Código: ' + esc((e && e.code) || "-") + " · " + esc(String((e && e.message) || e || "").slice(0, 200)) + '</p></div></div><div class="acoes"><button class="btn btn-sec" id="btnFim">Voltar ao início</button></div>');
         $("#btnFim").onclick = recomecar;
       }
@@ -1032,7 +1026,6 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
   const D = { config: {}, pessoas: {}, votos: {} };
   const desligar = [];
   const URL_VOTO = location.href.split("#")[0].split("?")[0];
-  const chaveEmail = (e) => String(e).toLowerCase().replace(/\./g, ",");
 
   $("#stUrl").textContent = URL_VOTO;
   if (DB.demo) DB.semear();
@@ -1094,12 +1087,11 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
     $("#tabParticipacao").innerHTML = '<tr><th>Sector</th><th class="num">Votaram</th><th></th><th class="num">%</th></tr>' + linhas;
     const fora = SETORES.filter((s) => !s.participa).map((s) => s.curto + " (" + s.pessoas.length + ")");
     $("#notaExcluidos").textContent = fora.length ? "Fora da votação por terem poucos funcionários: " + fora.join(", ") + "." : "";
-    const rever = votosValidos().filter(([pid, v]) => !VOT.emailCorresponde(v.email, PESSOA[pid].nome)).length;
     $("#numeros").innerHTML =
       '<div><div class="n">' + votaram + '</div><div class="l">votos registados</div></div>' +
       '<div><div class="n">' + pct(votaram, total) + '%</div><div class="l">participação, de ' + total + " funcionários</div></div>" +
       '<div><div class="n">' + (total - votaram) + '</div><div class="l">por votar</div></div>' +
-      '<div><div class="n' + (rever ? " v" : "") + '">' + rever + '</div><div class="l">votos a rever (e-mail não corresponde ao nome)</div></div>';
+      '<div><div class="n">' + ativos().length + '</div><div class="l">departamentos e unidades</div></div>';
   }
   $("#fases").addEventListener("click", async (e) => {
     const f = e.target.dataset.f;
@@ -1109,25 +1101,25 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
     if (ok) await DB.update("config", { fase: f });
   });
 
-  /* ---------- Votantes (quem votou e com que e-mail; nunca em quem) ---------- */
+  /* ---------- Votantes (quem votou; nunca em quem) ---------- */
   function linhasVotantes() {
     const r = [];
     ativos().forEach((s) => s.pessoas.forEach((p) => {
       const v = D.votos[p.id];
-      r.push({ pid: p.id, setor: s.curto, nome: p.nome, categoria: p.categoria, chefe: p.chefe, email: v ? v.email : "", data: v ? v.ts : null, votou: !!v, rever: v ? !VOT.emailCorresponde(v.email, p.nome) : false });
+      r.push({ pid: p.id, setor: s.curto, nome: p.nome, categoria: p.categoria, chefe: p.chefe, data: v ? v.ts : null, votou: !!v });
     }));
     return r;
   }
   function desenharVotos() {
         const q = semAcentos($("#buscaCod").value || ""), f = $("#filtroReg").value;
     const linhas = linhasVotantes()
-      .filter((r) => f === "todos" || (f === "sim" && r.votou) || (f === "nao" && !r.votou) || (f === "rever" && r.rever))
-      .filter((r) => !q || semAcentos([r.setor, r.nome, r.email].join(" ")).includes(q))
+      .filter((r) => f === "todos" || (f === "sim" && r.votou) || (f === "nao" && !r.votou))
+      .filter((r) => !q || semAcentos([r.setor, r.nome].join(" ")).includes(q))
       .map((r) => "<tr><td>" + esc(r.setor) + "</td><td>" + esc(r.nome) + (r.chefe ? ' <span class="etq v">chefe</span>' : "") + "</td><td>" +
-        (r.votou ? '<span class="email">' + esc(r.email) + "</span>" + (r.rever ? '<div class="alerta">e-mail não corresponde ao nome</div>' : "") : '<span style="color:var(--cinza)">ainda não votou</span>') +
+        (r.votou ? '<span class="etq">votou</span>' : '<span style="color:var(--cinza)">ainda não votou</span>') +
         "</td><td>" + (r.data ? esc(dataHora(r.data)) : "") + "</td><td>" +
         (r.votou ? '<button class="btn btn-sec btn-peq" data-anular="' + esc(r.pid) + '">Anular voto</button>' : "") + "</td></tr>").join("");
-    $("#tabCodigos").innerHTML = "<tr><th>Sector</th><th>Nome</th><th>E-mail usado</th><th>Data</th><th></th></tr>" + (linhas || '<tr><td colspan="5" class="vazio">Nada a mostrar.</td></tr>');
+    $("#tabCodigos").innerHTML = "<tr><th>Sector</th><th>Nome</th><th>Estado</th><th>Data</th><th></th></tr>" + (linhas || '<tr><td colspan="5" class="vazio">Nada a mostrar.</td></tr>');
   }
   $("#buscaCod").addEventListener("input", desenharVotos);
   $("#filtroReg").addEventListener("change", desenharVotos);
@@ -1135,17 +1127,17 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
     const pid = e.target.dataset && e.target.dataset.anular;
     if (!pid) return;
     const v = D.votos[pid];
-    const ok = await confirmar("Anular este voto?", "<p>O voto feito em nome de <b>" + esc(PESSOA[pid].nome) + "</b> com o e-mail <b>" + esc(v.email) + "</b> é apagado.</p><p style=\"color:var(--cinza)\">O nome e o e-mail ficam livres para votar de novo.</p>", "Anular", true);
+    const ok = await confirmar("Anular este voto?", "<p>O voto feito em nome de <b>" + esc(PESSOA[pid].nome) + "</b> é apagado.</p><p style=\"color:var(--cinza)\">O nome fica livre para votar de novo.</p>", "Anular", true);
     if (!ok) return;
-    await DB.update("", { ["votos/" + pid]: null, ["votaram/" + pid]: null, ["emails/" + chaveEmail(v.email)]: null });
+    await DB.update("", { ["votos/" + pid]: null, ["votaram/" + pid]: null });
     aviso("Voto anulado.");
   });
   $("#btnCopiar").onclick = async () => { try { await navigator.clipboard.writeText(URL_VOTO); aviso("Endereço copiado."); } catch (e) { aviso(URL_VOTO); } };
   $("#btnExpReg").onclick = () => {
-    const d = [["Sector", "Nome", "Categoria", "Chefe", "Votou", "E-mail usado", "Data", "E-mail não corresponde ao nome"]]
-      .concat(linhasVotantes().map((r) => [r.setor, r.nome, r.categoria, r.chefe ? "Sim" : "Não", r.votou ? "Sim" : "Não", r.email, r.data ? dataHora(r.data) : "", r.rever ? "Sim" : ""]));
+    const d = [["Sector", "Nome", "Categoria", "Chefe", "Votou", "Data"]]
+      .concat(linhasVotantes().map((r) => [r.setor, r.nome, r.categoria, r.chefe ? "Sim" : "Não", r.votou ? "Sim" : "Não", r.data ? dataHora(r.data) : ""]));
     const ws = XLSX.utils.aoa_to_sheet(d);
-    ws["!cols"] = [{ wch: 14 }, { wch: 42 }, { wch: 32 }, { wch: 7 }, { wch: 7 }, { wch: 34 }, { wch: 20 }, { wch: 12 }];
+    ws["!cols"] = [{ wch: 14 }, { wch: 42 }, { wch: 32 }, { wch: 7 }, { wch: 7 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Votantes");
     XLSX.writeFile(wb, "votantes_DPCM.xlsx");
@@ -1179,7 +1171,7 @@ window.SETORES = [{"id":"daf","nome":"Departamento de Administração e Finança
       const cab = !top ? '<div class="vazio">Sem votos.</div>' :
         '<div class="vencedor"><div class="t">' + (r.empate ? "Empate" : "Mais votado") + '</div><div class="nm">' +
         (r.empate ? r.lista.filter((x) => x.v1 === top.v1).map((x) => esc(PESSOA[x.id].nome)).join(" / ") : esc(PESSOA[top.id].nome)) + "</div></div>";
-      const li = r.lista.map((x) => '<li><span class="nome">' + esc(PESSOA[x.id].nome) + '</span><span class="v">' + x.v1 + ' <small style="color:var(--cinza);font-weight:400">votos</small></span></li>').join("");
+      const li = r.lista.map((x) => '<li><span class="nome">' + esc(PESSOA[x.id].nome) + '</span><span class="v">' + x.v1 + ' <small style="color:var(--cinza);font-weight:400">' + (x.v1 === 1 ? "voto" : "votos") + '</small></span></li>').join("");
       return '<div class="setor-cx"><h3>' + esc(s.curto) + '</h3><div class="sub">' + s.pessoas.length + " funcionários</div>" + cab + '<ul class="rank">' + li + "</ul></div>";
     }).join("");
   }
